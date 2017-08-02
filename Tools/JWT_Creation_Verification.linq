@@ -16,7 +16,7 @@ void Main()
 {
 	JWTHelper.Instance.DefaultIssuer = "http://bidevolution.leonardocompany.com/";
 	JWTHelper.Instance.DefaultAudience = "http://bidevolution.leonardocompany.com/";
-	JWTHelper.Instance.DefaultSecurityKey = "UHxNtYMRYwvfpO1dS5pWLKL0M2DgOj40EbN4SoBWgfc";
+	JWTHelper.Instance.DefaultSecurityKey = "UHxNtYMRYwvfpO1dS5pWLKL7M2DgOj40EbN4SoBWgfc";
 	
 	var enc = JWTHelper.Instance.Generate("admingme", "Admin", TimeSpan.FromMinutes(20)).Dump();
 
