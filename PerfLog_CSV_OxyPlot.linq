@@ -73,7 +73,7 @@ PlotModel FillPlotModel(Dictionary<DateTime, long> dic)
 	pm.Axes.Add(new OxyPlot.Axes.LinearAxis()
 	{
 		Position = OxyPlot.Axes.AxisPosition.Left,
-		Key = "Plans",
+		Key = "Private Bytes",
 		Minimum = 0,
 		MaximumPadding = 0.1,
 		MinimumPadding = 0.1,
@@ -83,7 +83,6 @@ PlotModel FillPlotModel(Dictionary<DateTime, long> dic)
 		MinorGridlineColor = OxyColors.LightGray
 	});
 
-	// PV
 	var s_memUsage = new OxyPlot.Series.StairStepSeries();
 	s_memUsage.Title = "MemUsage";
 	s_memUsage.Color = OxyColors.Red;

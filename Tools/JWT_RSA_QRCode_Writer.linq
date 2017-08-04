@@ -37,7 +37,7 @@ public static class JWTHelperExtensions
 	{
 		var writer = new BarcodeWriter
 		{
-			Format = BarcodeFormat.QR_CODE,
+			Format = BarcodeFormat.AZTEC,
 			Options = new EncodingOptions
 			{
 				Height = 300,
@@ -46,7 +46,7 @@ public static class JWTHelperExtensions
 			},
 		};
 		
-		writer.Options.Hints[EncodeHintType.ERROR_CORRECTION] = ErrorCorrectionLevel.L;
+		//writer.Options.Hints[EncodeHintType.ERROR_CORRECTION] = ErrorCorrectionLevel.L;
 		
 		var bmp = writer.Write(token);
 		

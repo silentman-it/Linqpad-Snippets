@@ -147,7 +147,8 @@ public sealed class JWTHelper
        {
            ValidAudiences = validAudiences ?? new string[] { DefaultAudience },
            ValidIssuers = validIssuers ?? new string[] { DefaultIssuer },
-           IssuerSigningKey = new RsaSecurityKey(publicOnly)
+           IssuerSigningKey = new RsaSecurityKey(publicOnly),
+		   ClockSkew = TimeSpan.Zero
        };
 
        var tokenHandler = new JwtSecurityTokenHandler();

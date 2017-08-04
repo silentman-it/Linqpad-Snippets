@@ -24,7 +24,7 @@
 
 void Main()
 {
-	string fileName = @"C:\Users\Federico\Desktop\GDTI\K\DEBUG_PVMC_UP_TURBIGO_4_Calculation_20170614.bin";
+	string fileName = @"C:\Users\Federico\Desktop\GDTI\20197\DEBUG_PVMC_UP_CNTRLNTRNO_11_Calculation_20170714.bin";
 	string measureFile = @"C:\Users\Federico\Desktop\GDTI\17918\11072016 turbigo4\11072016 turbigo4\20160711_Potenza_Netta_Turbigo.xml";
 	
 	
