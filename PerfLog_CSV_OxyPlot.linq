@@ -63,7 +63,7 @@ PlotModel FillPlotModel(Dictionary<DateTime, long> dic)
 	{
 		Position = OxyPlot.Axes.AxisPosition.Bottom,
 		Key = "Time",
-		StringFormat = "dd/MM/yy HH:mm",
+		StringFormat = "dd/MM/yy\r\nHH:mm",
 		MajorGridlineStyle = LineStyle.Solid,
 		MinorGridlineStyle = LineStyle.Dot,
 		MajorGridlineColor = OxyColors.LightGray,
@@ -80,7 +80,7 @@ PlotModel FillPlotModel(Dictionary<DateTime, long> dic)
 		MajorGridlineStyle = LineStyle.Solid,
 		MinorGridlineStyle = LineStyle.Dot,
 		MajorGridlineColor = OxyColors.LightGray,
-		MinorGridlineColor = OxyColors.LightGray
+		MinorGridlineColor = OxyColors.LightGray,
 	});
 
 	var s_memUsage = new OxyPlot.Series.StairStepSeries();

@@ -16,14 +16,15 @@ void Main()
 	
 	//conn.Query<SerieDetail>("select * from series_details where rownum < 100").Dump();
 	
-	var sql = @"
-		select * from series_details sd
-		inner join series s on sd.serie_id = s.serie_id
-		";
-	conn.Query<SerieDetail, Serie, SerieDetail>(sql, (sd, s) => {
-		sd.Serie = s;
-		return sd;
-	}, splitOn: "serie_id").AsQueryable().Take(10).Dump();
+	// Questa non funziona ---------------
+//	var sql = @"
+//		select * from series_details sd
+//		inner join series s on sd.serie_id = s.serie_id
+//		";
+//	conn.Query<SerieDetail, Serie, SerieDetail>(sql, (sd, s) => {
+//		sd.Serie = s;
+//		return sd;
+//	}, splitOn: "serie_id").AsQueryable().Take(10).Dump();
 	
 	
 }

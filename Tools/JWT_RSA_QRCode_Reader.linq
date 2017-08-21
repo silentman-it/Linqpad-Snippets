@@ -30,14 +30,23 @@ void Main()
 		throw new Exception("Cannot decode barcode");
 	}
 	
-	var token = JWTHelper.Instance.Validate(text, new string[] { "Issuer" }, new string[] { "Audience" }, pub);
-
-	token.Issuer.Dump("Issuer");
-	token.Audiences.Dump("Audiences");
-	token.ValidFrom.Dump("ValidFrom");
-	token.ValidTo.Dump("ValidTo");
+	try
+	{
+		var token = JWTHelper.Instance.Validate(text, new string[] { "Issuer" }, new string[] { "Audience" }, pub);
+		
+		Console.WriteLine ("*** The token is valid! ***");
 	
-	token.Dump();
+//		token.Issuer.Dump("Issuer");
+//		token.Audiences.Dump("Audiences");
+		token.ValidFrom.ToLocalTime().Dump("ValidFrom");
+		token.ValidTo.ToLocalTime().Dump("ValidTo");
+		
+		token.Dump();
+	}
+	catch(Exception ex)
+	{
+		ex.Message.Dump(string.Format("Token not validated ({0})", ex.GetType().Name));
+	}
 	
 }
 
