@@ -31,6 +31,11 @@ void Main()
 	}
 	
 	var token = JWTHelper.Instance.Validate(text, new string[] { "Issuer" }, new string[] { "Audience" }, pub);
+
+	token.Issuer.Dump("Issuer");
+	token.Audiences.Dump("Audiences");
+	token.ValidFrom.Dump("ValidFrom");
+	token.ValidTo.Dump("ValidTo");
 	
 	token.Dump();
 	
