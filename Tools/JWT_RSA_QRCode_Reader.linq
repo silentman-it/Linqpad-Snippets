@@ -20,7 +20,7 @@ void Main()
 {
 	string pub = "<RSAKeyValue><Modulus>nRo2KylZbcjMBPFYxceAU2Ikw8C/WpJqmLjYKyfYrrxMrc7bC1nwDDRGoz5yQEBqH8pCXHrYVDmxmbvdrOLhTXKeKk5YNkST2tgGOBD8NthAgHpiCISUD9X49+P9IktKdB4owARpizi5keCAnnSxIdmn4TKm3JDP2tTX/1ujU3VlBVVCYdU5k/U+4OGG87apPcOrXd1GfTtVnhBftv2VtUo0YhdRWTlcJ2uU/Ck3b+Xge6PezTGPcv4I/Z6/FtAYij7fwc3G2rkfyd6cPfmmoNKoY+XrbXZbjrf69LMwH531eRxDyJrIkRj0E2rsLMIxm+KKb7w/G4j7PcBpHcM3Sw==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>";
 	
-	var bmp = (Bitmap)Bitmap.FromFile(@"C:\Temp\QRCode.png");
+	var bmp = (Bitmap)Bitmap.FromFile(@"C:\Temp\ETicket.png");
 	
 	string fmt, text;
 	bmp.DecodeBarcode(out fmt, out text);

@@ -28,7 +28,7 @@ void Main()
 	
 	var bmp = token.Dump().ToQRCode().Dump();
 	
-	bmp.Save(@"C:\Temp\QRCode.png", ImageFormat.Png);
+	bmp.Save(@"C:\Temp\ETicket.png", ImageFormat.Png);
 	
 }
 
@@ -38,7 +38,7 @@ public static class JWTHelperExtensions
 	{
 		var writer = new BarcodeWriter
 		{
-			Format = BarcodeFormat.QR_CODE,
+			Format = BarcodeFormat.AZTEC,
 			Options = new EncodingOptions
 			{
 				Height = 300,

@@ -67,8 +67,9 @@ void Main()
 		
 		SeriesDetails
 		.Where(x => lsSid.Contains(x.SerieID) && x.ValidityStartDate >= dtStart && x.ValidityStartDate < dtEnd)
-		.Select(x => new { x.StreamID, x.Serie.ChannelCd, x.Value, x.Label, x.ValidityStartDate, x.ValidityEndDate })
+		.Select(x => new { x.StreamID, x.Serie.SymbolCd, x.Serie.ChannelCd, x.Value, x.Label, x.ValidityStartDate, x.ValidityEndDate })
 		.ToList()
+		.Dump("Prima di pivottare")
 		
 		.ToPivotTablePrivate(
 			x => x.StreamID,
