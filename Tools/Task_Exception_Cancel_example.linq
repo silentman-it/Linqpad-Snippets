@@ -28,7 +28,7 @@ void Main()
 				Thread.Sleep(parm.Item2);
 				
 				// Simula una bomba random
-				if(parm.Item1 == "BOMB")
+				if(parm.Item1 == "BOMBER")
 				{
 					if(rnd.Next(5) == 0)
 					{
@@ -57,7 +57,7 @@ void Main()
 	lsTask.Add(Task.Factory.StartNew(a1,(new Tuple<string, int>("F", 50)),ct));
 	lsTask.Add(Task.Factory.StartNew(a1,(new Tuple<string, int>("G", 333)),ct));
 	lsTask.Add(Task.Factory.StartNew(a1,(new Tuple<string, int>("H", 2000)),ct));
-	lsTask.Add(Task.Factory.StartNew(a1,(new Tuple<string, int>("BOMB", 1000)),ct));
+	lsTask.Add(Task.Factory.StartNew(a1,(new Tuple<string, int>("BOMBER", 1000)),ct));
 
 	try
 	{	        

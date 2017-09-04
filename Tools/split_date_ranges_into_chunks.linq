@@ -1,13 +1,4 @@
-<Query Kind="Program">
-  <Connection>
-    <ID>1b664880-aaa6-49a8-86d0-43deea4970dd</ID>
-    <Persist>true</Persist>
-    <Driver>EntityFrameworkDbContext</Driver>
-    <CustomAssemblyPath>C:\Work\EMODS\DEV\EMODS2\Data\EMODS.Data\bin\Debug\EMODS.Data.dll</CustomAssemblyPath>
-    <CustomTypeName>EMODS.Data.EDMWarehouseContainer</CustomTypeName>
-    <AppConfigPath>C:\Work\EMODS\DEV\EMODS2\Data\EMODS.Data\bin\Debug\EMODS.Data.dll.config</AppConfigPath>
-  </Connection>
-</Query>
+<Query Kind="Program" />
 
 void Main()
 {
@@ -19,7 +10,7 @@ void Main()
 	
 	var result = SplitRangeIntoChunks(myDateTime, myEndDateTime, TimeSpan.FromDays(1));
 
-	result.Dump();
+	result.Select(x => new { From = x.Item1, To = x.Item2, Duration = x.Item2 - x.Item1 }).Dump();
 }
 
 // Define other methods and classes here
