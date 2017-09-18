@@ -24,13 +24,10 @@
 
 void Main()
 {
-	//string[] unitList = { "UP_NAPOLIL_4", "UP_TORREVALD_4", "UP_TRRVLDLIGA_5", "UP_TRRVLDLIGA_6", "UP_VADOTERM_5", "UP_VADO_TERM_3", "UP_VADO_TERM_4" };
-	string[] unitList = { "UP_TURBIGO_4" };
-	//string[] unitList = { "UP_CNTRALETEL_11", "UP_BRESSANON_1", "UP_S.PANCRAZ_1", "UP_S.VALBURG_1", "UP_LAPPAGO_1", "UP_M.DI_TURE_1", "UP_PONTE_GAR_1", "UP_SARENTINO_1", "UP_S.FLORI.A_1", "UP_SFLORIANO_2", "UP_CNTRLNTRNO_11", "UP_FONTANA_B_1", "UP_LANA_1", "UP_PRACOMUNE_1", "UP_CARDANO_1" };
-	//string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
-	
-	string endpointAddress = "net.tcp://localhost:8734/CalculatePlans/"; // LOCAL
-	//string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; // IREN TEST
+	int minsDelay = 15;
+
+	string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
+	string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; // IREN TEST
 	
 	NetTcpBinding myNetTcpBinding = new NetTcpBinding() {
 		MaxReceivedMessageSize = 1024 * 64 * 100,
@@ -39,36 +36,42 @@ void Main()
 		Security = new NetTcpSecurity { Mode = SecurityMode.None }
 	};
 
-	ChannelFactory<ICalculatePlansService> myNetTcpChannelFactory = new ChannelFactory<ICalculatePlansService>(myNetTcpBinding, new EndpointAddress(endpointAddress));
-
-	ICalculatePlansService pNetTcpClient = myNetTcpChannelFactory.CreateChannel();
-
-	var o = 
-		pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Parse("20/07/2017"), GetCalculatePlansDataOptions.Defaults)
-		//pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Today, GetCalculatePlansDataOptions.Defaults)
-			.Dump("GetCalculatePlansData() over NetTcp");
+	Console.WriteLine ("TS;ItemsReceived;AllSuccessful;PVMC_AllOK;Fasce_AllOK;Misure");
+	while(true)
+	{
+	
+		try
+		{
+			ChannelFactory<ICalculatePlansService> myNetTcpChannelFactory = new ChannelFactory<ICalculatePlansService>(myNetTcpBinding, new EndpointAddress(endpointAddress));
+			ICalculatePlansService pNetTcpClient = myNetTcpChannelFactory.CreateChannel();
+			
+			var o = pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Today, GetCalculatePlansDataOptions.Defaults);
+			
+			// Checks
+			Console.WriteLine ("{0};{1};{2};{3};{4};{5}",
+				DateTime.Now,
+				o.Count(),
+				o.ToList().TrueForAll(x => x.Successful),
+				o.ToList().TrueForAll(x => x.PVMC.Any()),
+				o.ToList().TrueForAll(x => x.Fasce.Any()),
+				o.ToList().TrueForAll(x => x.Metering.ToList().Any(m => m.Value.HasValue))
+				);
+				
+			((IClientChannel)pNetTcpClient).Close();
+		}
+		catch(Exception ex)
+		{
+			Console.WriteLine ("{0};EXCEPTION;;;",
+				DateTime.Now
+				);
+		}
 		
-//	o.Select(x => new { x.UnitName, x.LatestMeasureTime, Metering = x.Metering.Where(m => m.Value.HasValue).Max(m => m.Key) }).Dump();
 		
-	((IClientChannel)pNetTcpClient).Close();
+		Thread.Sleep(minsDelay * 60 * 1000);	
+			
+		
 	
-	///////////////////////////////////////
-	
-//	BasicHttpBinding myHttpBinding = new BasicHttpBinding() {
-//		MaxReceivedMessageSize = 1024 * 1024 * 100,
-//		ReceiveTimeout = TimeSpan.FromMinutes(2),
-//	};	
-//	
-//	ChannelFactory<ICalculatePlansService> myHttpChannelFactory   = new ChannelFactory<ICalculatePlansService>(myHttpBinding, new EndpointAddress("http://localhost:8733/CalculatePlans/CalculatePlansService/"));
-//	
-//	ICalculatePlansService pHttpClient = myHttpChannelFactory.CreateChannel();
-//	
-//	pHttpClient.GetInfoConsolles(unitList, DateTime.Parse("30/05/2017"))
-//		.Dump("GetInfoConsolles() over Http");
-//	
-//	((IClientChannel)pNetTcpClient).Close();
-
-	
+	}
 }
 
     [System.Diagnostics.DebuggerStepThroughAttribute()]

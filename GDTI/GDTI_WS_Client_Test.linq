@@ -8,12 +8,18 @@
 
 void Main(string[] args)
 {
-
-	VMUtils.ServerURI = "http://win2008r2test1:83/TmsMainService.svc";
-	VMUtils.ServerDNS = "localhost";
+	// IREN_TEST
+	VMUtils.ServerURI = "http://172.16.1.83/TmsMainService.svc";
+	VMUtils.ServerDNS = "srvegt01";
+	
+	
 	VMUtils.SetCredentials("System", "pippo");
-	VMUtils.SvcProxy.AuthenticateUser("System", "pippo", null).Dump();
-	VMUtils.SvcProxy.GetUnits(null).Dump();
+	//VMUtils.SvcProxy.AuthenticateUser("System", "pippo", null).Dump();
+	var units = VMUtils.SvcProxy.GetUnits(null).Select(x => "\"" + x.ETSOCode + "\"").ToArray().Dump();
+	
+	string.Join(", ", units).Dump();
+	
+	
 	
 	
 }

@@ -50,10 +50,10 @@ void Main()
 	// READ
 	//
 	
-	var sd = SerieData.Instance.GetSerieData("GME", null, "BindingProgram", "FMS", null, DateTime.Parse("08/06/2017"));
-	sd
-		.Where(x => x.ExtendedData.Any())
-		.Dump();
+//	var sd = SerieData.Instance.GetSerieData("GME", null, "BindingProgram", "FMS", null, DateTime.Parse("08/06/2017"));
+//	sd
+//		.Where(x => x.ExtendedData.Any())
+//		.Dump();
 	
 	//
 	// SEMAPHORES
@@ -65,7 +65,7 @@ void Main()
 	// SERIES
 	//
 	
-	SerieData.Instance.GetSeries("GME", null, "BindingProgram", null, null)
+	SerieData.Instance.GetSeries("GME", "UP_TURBIGO_4", "BindingProgram", null, null)
 		.Where(x => x.Channel != "Signal")
 		.Dump();
 

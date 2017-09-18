@@ -24,13 +24,17 @@
 
 void Main()
 {
+	//string endpointAddress = @"http://localhost:11229/TmsMainService.svc"; //LOCAL
+	string endpointAddress = @"http://srvegt01.master.local/TmsMainService.svc"; //IREN_TEST
+	string dnsIdentity = "srvegt01";
+
 	WSHttpBinding myBinding = new WSHttpBinding() {
 		MaxReceivedMessageSize = 1024 * 1024 * 5,
 		ReceiveTimeout = TimeSpan.FromMinutes(2),
 		Security = new WSHttpSecurity { Mode = SecurityMode.Message, Message = new NonDualMessageSecurityOverHttp { ClientCredentialType = MessageCredentialType.UserName } }
 	};
 
-	ChannelFactory<ITmsMainService> channelFactory = new ChannelFactory<ITmsMainService>(myBinding, new EndpointAddress("http://localhost:11229/TmsMainService.svc"));
+	ChannelFactory<ITmsMainService> channelFactory = new ChannelFactory<ITmsMainService>(myBinding, new EndpointAddress(new Uri(endpointAddress), new DnsEndpointIdentity(dnsIdentity)));
 	
 	channelFactory.Credentials.UserName.UserName = "System";
 	channelFactory.Credentials.UserName.Password = "pippo";

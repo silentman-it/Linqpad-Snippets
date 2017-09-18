@@ -1,15 +1,15 @@
 <Query Kind="Statements">
   <Connection>
-    <ID>1202f3d3-b7d5-4258-ac52-f1ee0160d302</ID>
+    <ID>28f7de50-894b-413e-af92-a6ddac64cedf</ID>
     <Persist>true</Persist>
     <Driver Assembly="IQDriver" PublicKeyToken="5b59726538a49684">IQDriver.IQDriver</Driver>
     <Provider>Devart.Data.Oracle</Provider>
-    <CustomCxString>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAg4VPWvAGA0K8d2W/MBVMggAAAAACAAAAAAAQZgAAAAEAACAAAAAKrfwu2OSOqwolUiPWik9UN40wR5Dzp4939gu7/wVSuwAAAAAOgAAAAAIAACAAAACEHPLUc7dObeuKE6aYQstf+XRl/tjcDVDoCpnw4ihNuUAAAAC0VT8gG05av7bVR2DERhfHx3gtwL8WhST0zmfkwV8ip/oDMVYiXXx0hgdbNoDB0vyx7Rg4JLZL1BbrRfvx2KfFQAAAAGcFgzHUIB3znMMgGvIP1f3+0+6mNB1vIQEny/V/UbBz0mNNCGdQJ3ueiwZ2jOBed3lJ/4gj4yWxCf6BYbSCAGk=</CustomCxString>
-    <Server>svil4</Server>
-    <UserName>ed_framework</UserName>
+    <CustomCxString>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAkOYp3WDye0ORXtly5hEZsAAAAAACAAAAAAAQZgAAAAEAACAAAABs3SM43cU1cqZFEYvyWCBr2f3d443aAzIZdytRKVcvzwAAAAAOgAAAAAIAACAAAADqn1JNbU2X8oNRbH8e5SdKL5P4li8MGJBsoFrmv4qVgsAAAAC8C60jZxe6zObN5bQBNXPRPfWfNEzCDtcYd2b9AfL8Zk3o8919bAlpylOt48ZVQwZmCsjiHSFOg28e2akFU/v15Ccpy7lSov2bOdPN/yjUARGhTnHH/4V1F1hozwImz+P9VUTL7Tl2+ccdGKhHd1qmD7rvZbeIBe5db/FGfN5XFSunDi3vFgZz0A+lLi75yi4dEx86hFk5Qk9W2w2K2u/G9kf3CzGLRWSTvZOHF28njAFRvvDRIkWXSMECcMaScOdAAAAAx0fMn4TMHqPohg/42vvRaGd2mLdog3ArudhNUCq4+jgr2flDQEFYy/RW4VdRXdMkIvPBz1daSJn5P1DxBbP8aQ==</CustomCxString>
     <EncryptCustomCxString>true</EncryptCustomCxString>
-    <Password>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA8yqkEwwIyEy9PPj7RuTVJgAAAAACAAAAAAAQZgAAAAEAACAAAACvZ09a4O49pXr13xw2SRRmG6aSJ3FKsaCyYw3Xl3RMzQAAAAAOgAAAAAIAACAAAAB8la2vpFtF4sC3guzRW/tgam52bSl04YCE2RfWfn6v1hAAAABwfqVOxamEcNGTSCO9QM5VQAAAABP4/dXbp0cm+gGrwa6hMG2W26osBYKrZYAZDS11X+dBr7CPCq/mM7m83JuzL+GIVuNg0bXIIlzQMpME/OmtGBQ=</Password>
-    <DisplayName>svil4.ed_framework</DisplayName>
+    <DisplayName>win2008r2test1.ed_framework</DisplayName>
+    <Server>(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=Win2008R2Test1.edg.grptop.net)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=ETR11DM1)))</Server>
+    <UserName>ed_framework</UserName>
+    <Password>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAvm6QbRxlJUuLCV01lsuo5AAAAAACAAAAAAAQZgAAAAEAACAAAABh4tFJTvgr+Vy2uDBP6l9Amx3z06r61pm7iI8Xbrf/TwAAAAAOgAAAAAIAACAAAABw2Ih0heWuoDAiSPadoE5N01uM+IgFo6e/n1odEpaKJxAAAACTs8x2QHPzt2WPga1pQyhSQAAAALsm2+UIJ0mLwsk2gWaHSPkWaK/MRIL8ZNYRraJj7KJdvddZNT3nWvgHLYl2v52SFYdKKemjWUy3STVBkjWviUk=</Password>
     <DriverData>
       <StripUnderscores>true</StripUnderscores>
       <QuietenAllCaps>true</QuietenAllCaps>
@@ -31,8 +31,8 @@ var ls = Messages
 	x.Runnerid,
 	x.Runnerqueueid
 })
+.Where(x => x.Filename.Contains("SendInstant"))
 .OrderByDescending(x => x.Creationdate)
-.Take(10)
 ;
 
 ls.Select(x => new {
@@ -45,5 +45,6 @@ ls.Select(x => new {
 	Runner = x.Runnerid,
 	Queue = x.Runnerqueueid
 })
-//.Where(x => x.Blob.Contains("1570"))
+.ToList()
+.Where(x => x.Blob.Contains("SendInstantMeasure"))
 .Dump();

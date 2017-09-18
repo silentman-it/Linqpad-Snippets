@@ -24,14 +24,14 @@
 
 void Main()
 {
-	string fileName = @"C:\Users\Federico\Desktop\GDTI\DEBUG_PVMC_UP_VADOTERM_5_Calculation_20170825.bin";
+	string fileName = @"C:\Users\Federico\Desktop\GDTI\DEBUG_PVMC_UP_VADOTERM_5_Calculation_20170610.bin";
 	string measureFile = @"C:\Users\Federico\Desktop\GDTI\17918\11072016 turbigo4\11072016 turbigo4\20160711_Potenza_Netta_Turbigo.xml";
 	
 	
-	PVMC p2 = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(fileName));
-	var p = p2 as PVMC;
+//	PVMC p2 = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(fileName));
+//	var p = p2 as PVMC;
 
-	//PVM p = BinarySerialization.Deserialize<PVM>(File.ReadAllBytes(fileName));
+	PVM p = BinarySerialization.Deserialize<PVM>(File.ReadAllBytes(fileName));
 	//PVtc p = BinarySerialization.Deserialize<PVtc>(File.ReadAllBytes(fileName));
 	
 	p.Unit.Dump("Unit");
@@ -41,10 +41,10 @@ void Main()
 	p.Debug = false;
 	///////////////////////
 
-//	p.CommandsToIgnore.Add("0003941529");
+//	p.CommandsToIgnore.Add("0004131740");
 //	
-//	p.CommandsToDebug.Add("0003650170");
-//	p.StopAt("00:59:00");
+//	p.CommandsToDebug.Add("0004081738");
+	//p.StopAt("07:02:00");
 	
 	//////////////////////////////////////////////
 	// Dump Messaggi
@@ -109,6 +109,8 @@ void Main()
 	//p.RegulationSignal.Dump("Regulation Signal");
 	p.Unavailabilities.Dump("Unavailabilities");
 	p.CountPlanSetupChanges().Dump("Setup Changes");
+	
+	p.Dump("Raw Object");
 	
 	var pm = FillPlotModel(p);
 	
