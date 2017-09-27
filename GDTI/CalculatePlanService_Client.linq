@@ -25,12 +25,12 @@
 void Main()
 {
 	//string[] unitList = { "UP_NAPOLIL_4", "UP_TORREVALD_4", "UP_TRRVLDLIGA_5", "UP_TRRVLDLIGA_6", "UP_VADOTERM_5", "UP_VADO_TERM_3", "UP_VADO_TERM_4" };
-	string[] unitList = { "UP_TURBIGO_4" };
+	string[] unitList = { "UP_BUSSENTO_1" };
 	//string[] unitList = { "UP_CNTRALETEL_11", "UP_BRESSANON_1", "UP_S.PANCRAZ_1", "UP_S.VALBURG_1", "UP_LAPPAGO_1", "UP_M.DI_TURE_1", "UP_PONTE_GAR_1", "UP_SARENTINO_1", "UP_S.FLORI.A_1", "UP_SFLORIANO_2", "UP_CNTRLNTRNO_11", "UP_FONTANA_B_1", "UP_LANA_1", "UP_PRACOMUNE_1", "UP_CARDANO_1" };
 	//string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
 	
-	string endpointAddress = "net.tcp://localhost:8734/CalculatePlans/"; // LOCAL
-	//string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; // IREN TEST
+	//string endpointAddress = "net.tcp://localhost:8734/CalculatePlans/"; // LOCAL
+	string endpointAddress = "net.tcp://srvegt01.master.local:18734/CalculatePlans/"; // IREN TEST (on 18734/tcp)
 	
 	NetTcpBinding myNetTcpBinding = new NetTcpBinding() {
 		MaxReceivedMessageSize = 1024 * 64 * 100,
@@ -44,33 +44,29 @@ void Main()
 	ICalculatePlansService pNetTcpClient = myNetTcpChannelFactory.CreateChannel();
 
 	var o = 
-		pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Parse("20/07/2017"), GetCalculatePlansDataOptions.Defaults)
-		//pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Today, GetCalculatePlansDataOptions.Defaults)
+		//pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Parse("01/09/2017"), GetCalculatePlansDataOptions.Defaults)
+		pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Today, GetCalculatePlansDataOptions.Defaults)
 			.Dump("GetCalculatePlansData() over NetTcp");
+			
+	pNetTcpClient.GetCacheStatus()
+		.GroupBy(x => x.Key2)
+		.OrderBy(x => x.Key)
+		.Dump("CacheStatus");
 		
 //	o.Select(x => new { x.UnitName, x.LatestMeasureTime, Metering = x.Metering.Where(m => m.Value.HasValue).Max(m => m.Key) }).Dump();
 		
 	((IClientChannel)pNetTcpClient).Close();
-	
-	///////////////////////////////////////
-	
-//	BasicHttpBinding myHttpBinding = new BasicHttpBinding() {
-//		MaxReceivedMessageSize = 1024 * 1024 * 100,
-//		ReceiveTimeout = TimeSpan.FromMinutes(2),
-//	};	
-//	
-//	ChannelFactory<ICalculatePlansService> myHttpChannelFactory   = new ChannelFactory<ICalculatePlansService>(myHttpBinding, new EndpointAddress("http://localhost:8733/CalculatePlans/CalculatePlansService/"));
-//	
-//	ICalculatePlansService pHttpClient = myHttpChannelFactory.CreateChannel();
-//	
-//	pHttpClient.GetInfoConsolles(unitList, DateTime.Parse("30/05/2017"))
-//		.Dump("GetInfoConsolles() over Http");
-//	
-//	((IClientChannel)pNetTcpClient).Close();
 
-	
 }
 
+
+// ///////////////////////////////////////////////
+// Copied from Service Reference's code
+// ///////////////////////////////////////////////
+
+
+    
+    
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="InfoConsolle", Namespace="http://schemas.datacontract.org/2004/07/TMS.Common.Types")]
@@ -811,6 +807,9 @@ void Main()
         private decimal PMinField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private decimal SBField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
         private System.DateTimeOffset TSField;
         
         [global::System.ComponentModel.BrowsableAttribute(false)]
@@ -863,6 +862,19 @@ void Main()
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
+        public decimal SB {
+            get {
+                return this.SBField;
+            }
+            set {
+                if ((this.SBField.Equals(value) != true)) {
+                    this.SBField = value;
+                    this.RaisePropertyChanged("SB");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
         public System.DateTimeOffset TS {
             get {
                 return this.TSField;
@@ -903,6 +915,83 @@ void Main()
         Defaults = 3,
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="CacheStatusItem", Namespace="http://schemas.datacontract.org/2004/07/CalculatePlans")]
+    [System.SerializableAttribute()]
+    public partial class CacheStatusItem : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
+        
+        [System.NonSerializedAttribute()]
+        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string Key1Field;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string Key2Field;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string RegionField;
+        
+        [global::System.ComponentModel.BrowsableAttribute(false)]
+        public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
+            get {
+                return this.extensionDataField;
+            }
+            set {
+                this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Key1 {
+            get {
+                return this.Key1Field;
+            }
+            set {
+                if ((object.ReferenceEquals(this.Key1Field, value) != true)) {
+                    this.Key1Field = value;
+                    this.RaisePropertyChanged("Key1");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Key2 {
+            get {
+                return this.Key2Field;
+            }
+            set {
+                if ((object.ReferenceEquals(this.Key2Field, value) != true)) {
+                    this.Key2Field = value;
+                    this.RaisePropertyChanged("Key2");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Region {
+            get {
+                return this.RegionField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.RegionField, value) != true)) {
+                    this.RegionField = value;
+                    this.RaisePropertyChanged("Region");
+                }
+            }
+        }
+        
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        
+        protected void RaisePropertyChanged(string propertyName) {
+            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
+            if ((propertyChanged != null)) {
+                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="CPServiceReferenceNetTcp.ICalculatePlansService")]
     public interface ICalculatePlansService {
@@ -930,6 +1019,14 @@ void Main()
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICalculatePlansService/GetCalculatePlansDataExtended", ReplyAction="http://tempuri.org/ICalculatePlansService/GetCalculatePlansDataExtendedResponse")]
         System.Threading.Tasks.Task<CalculatePlansDataItem[]> GetCalculatePlansDataExtendedAsync(string[] lsUnits, System.DateTime flowDate, GetCalculatePlansDataOptions options);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICalculatePlansService/GetCacheStatus", ReplyAction="http://tempuri.org/ICalculatePlansService/GetCacheStatusResponse")]
+        [System.ServiceModel.FaultContractAttribute(typeof(CalculatePlansServiceFault), Action="http://tempuri.org/ICalculatePlansService/GetCacheStatusCalculatePlansServiceFaul" +
+            "tFault", Name="CalculatePlansServiceFault", Namespace="http://schemas.datacontract.org/2004/07/CalculatePlans")]
+        CacheStatusItem[] GetCacheStatus();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICalculatePlansService/GetCacheStatus", ReplyAction="http://tempuri.org/ICalculatePlansService/GetCacheStatusResponse")]
+        System.Threading.Tasks.Task<CacheStatusItem[]> GetCacheStatusAsync();
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -981,5 +1078,13 @@ void Main()
         
         public System.Threading.Tasks.Task<CalculatePlansDataItem[]> GetCalculatePlansDataExtendedAsync(string[] lsUnits, System.DateTime flowDate, GetCalculatePlansDataOptions options) {
             return base.Channel.GetCalculatePlansDataExtendedAsync(lsUnits, flowDate, options);
+        }
+        
+        public CacheStatusItem[] GetCacheStatus() {
+            return base.Channel.GetCacheStatus();
+        }
+        
+        public System.Threading.Tasks.Task<CacheStatusItem[]> GetCacheStatusAsync() {
+            return base.Channel.GetCacheStatusAsync();
         }
     }

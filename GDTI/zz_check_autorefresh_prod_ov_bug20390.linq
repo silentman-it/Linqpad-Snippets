@@ -27,7 +27,7 @@ void Main()
 	int minsDelay = 15;
 
 	string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
-	string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; // IREN TEST
+	string endpointAddress = "net.tcp://srvegt01.master.local:18734/CalculatePlans/"; // IREN TEST
 	
 	NetTcpBinding myNetTcpBinding = new NetTcpBinding() {
 		MaxReceivedMessageSize = 1024 * 64 * 100,
@@ -36,7 +36,7 @@ void Main()
 		Security = new NetTcpSecurity { Mode = SecurityMode.None }
 	};
 
-	Console.WriteLine ("TS;ItemsReceived;AllSuccessful;PVMC_AllOK;Fasce_AllOK;Misure");
+	Console.WriteLine ("TS;ItemsReceived;AllSuccessful;PVMC_AllOK;Fasce_AllOK;Misure;CacheItems");
 	while(true)
 	{
 	
@@ -46,15 +46,17 @@ void Main()
 			ICalculatePlansService pNetTcpClient = myNetTcpChannelFactory.CreateChannel();
 			
 			var o = pNetTcpClient.GetCalculatePlansDataExtended(unitList, DateTime.Today, GetCalculatePlansDataOptions.Defaults);
+			var cacheitems = pNetTcpClient.GetCacheStatus();
 			
 			// Checks
-			Console.WriteLine ("{0};{1};{2};{3};{4};{5}",
+			Console.WriteLine ("{0};{1};{2};{3};{4};{5};{6}",
 				DateTime.Now,
 				o.Count(),
 				o.ToList().TrueForAll(x => x.Successful),
 				o.ToList().TrueForAll(x => x.PVMC.Any()),
 				o.ToList().TrueForAll(x => x.Fasce.Any()),
-				o.ToList().TrueForAll(x => x.Metering.ToList().Any(m => m.Value.HasValue))
+				o.ToList().TrueForAll(x => x.Metering.ToList().Any(m => m.Value.HasValue)),
+				cacheitems.Count()
 				);
 				
 			((IClientChannel)pNetTcpClient).Close();
@@ -74,6 +76,14 @@ void Main()
 	}
 }
 
+
+// ///////////////////////////////////////////////
+// Copied from Service Reference's code
+// ///////////////////////////////////////////////
+
+
+    
+    
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="InfoConsolle", Namespace="http://schemas.datacontract.org/2004/07/TMS.Common.Types")]
@@ -814,6 +824,9 @@ void Main()
         private decimal PMinField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private decimal SBField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
         private System.DateTimeOffset TSField;
         
         [global::System.ComponentModel.BrowsableAttribute(false)]
@@ -866,6 +879,19 @@ void Main()
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
+        public decimal SB {
+            get {
+                return this.SBField;
+            }
+            set {
+                if ((this.SBField.Equals(value) != true)) {
+                    this.SBField = value;
+                    this.RaisePropertyChanged("SB");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
         public System.DateTimeOffset TS {
             get {
                 return this.TSField;
@@ -906,6 +932,83 @@ void Main()
         Defaults = 3,
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="CacheStatusItem", Namespace="http://schemas.datacontract.org/2004/07/CalculatePlans")]
+    [System.SerializableAttribute()]
+    public partial class CacheStatusItem : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
+        
+        [System.NonSerializedAttribute()]
+        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string Key1Field;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string Key2Field;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string RegionField;
+        
+        [global::System.ComponentModel.BrowsableAttribute(false)]
+        public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
+            get {
+                return this.extensionDataField;
+            }
+            set {
+                this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Key1 {
+            get {
+                return this.Key1Field;
+            }
+            set {
+                if ((object.ReferenceEquals(this.Key1Field, value) != true)) {
+                    this.Key1Field = value;
+                    this.RaisePropertyChanged("Key1");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Key2 {
+            get {
+                return this.Key2Field;
+            }
+            set {
+                if ((object.ReferenceEquals(this.Key2Field, value) != true)) {
+                    this.Key2Field = value;
+                    this.RaisePropertyChanged("Key2");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Region {
+            get {
+                return this.RegionField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.RegionField, value) != true)) {
+                    this.RegionField = value;
+                    this.RaisePropertyChanged("Region");
+                }
+            }
+        }
+        
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        
+        protected void RaisePropertyChanged(string propertyName) {
+            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
+            if ((propertyChanged != null)) {
+                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="CPServiceReferenceNetTcp.ICalculatePlansService")]
     public interface ICalculatePlansService {
@@ -933,6 +1036,14 @@ void Main()
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICalculatePlansService/GetCalculatePlansDataExtended", ReplyAction="http://tempuri.org/ICalculatePlansService/GetCalculatePlansDataExtendedResponse")]
         System.Threading.Tasks.Task<CalculatePlansDataItem[]> GetCalculatePlansDataExtendedAsync(string[] lsUnits, System.DateTime flowDate, GetCalculatePlansDataOptions options);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICalculatePlansService/GetCacheStatus", ReplyAction="http://tempuri.org/ICalculatePlansService/GetCacheStatusResponse")]
+        [System.ServiceModel.FaultContractAttribute(typeof(CalculatePlansServiceFault), Action="http://tempuri.org/ICalculatePlansService/GetCacheStatusCalculatePlansServiceFaul" +
+            "tFault", Name="CalculatePlansServiceFault", Namespace="http://schemas.datacontract.org/2004/07/CalculatePlans")]
+        CacheStatusItem[] GetCacheStatus();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ICalculatePlansService/GetCacheStatus", ReplyAction="http://tempuri.org/ICalculatePlansService/GetCacheStatusResponse")]
+        System.Threading.Tasks.Task<CacheStatusItem[]> GetCacheStatusAsync();
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -984,5 +1095,13 @@ void Main()
         
         public System.Threading.Tasks.Task<CalculatePlansDataItem[]> GetCalculatePlansDataExtendedAsync(string[] lsUnits, System.DateTime flowDate, GetCalculatePlansDataOptions options) {
             return base.Channel.GetCalculatePlansDataExtendedAsync(lsUnits, flowDate, options);
+        }
+        
+        public CacheStatusItem[] GetCacheStatus() {
+            return base.Channel.GetCacheStatus();
+        }
+        
+        public System.Threading.Tasks.Task<CacheStatusItem[]> GetCacheStatusAsync() {
+            return base.Channel.GetCacheStatusAsync();
         }
     }
