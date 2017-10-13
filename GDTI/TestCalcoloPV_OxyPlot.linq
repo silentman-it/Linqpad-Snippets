@@ -24,9 +24,8 @@
 
 void Main()
 {
-	string fileName = @"C:\Users\Federico\Desktop\GDTI\K\DEBUG_PVMC_UP_VADOTERM_5_Calculation_20170612.bin";
-	string measureFile = @"C:\Users\Federico\Desktop\GDTI\17918\11072016 turbigo4\11072016 turbigo4\20160711_Potenza_Netta_Turbigo.xml";
-	
+	string fileName = @"C:\Users\Federico\Desktop\GDTI\K\DEBUG_PVMC_UP_VADOTERM_5_Calculation_20170829.bin";
+	string measureFile = @"C:\Users\Federico\Desktop\GDTI\K\20170719_Potenza_Netta_2GT_MONC.xml";
 	
 //	PVMC p2 = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(fileName));
 //	var p = p2 as PVMC;
@@ -38,13 +37,13 @@ void Main()
 	p.FlowDate.Dump("FlowDate");
 	
 	///////////////////////
-	p.Debug = false;
+	p.Debug = true;
 	///////////////////////
 
 //	p.CommandsToIgnore.Add("0004131740");
 //	
-//	p.CommandsToDebug.Add("0004081738");
-	//p.StopAt("07:02:00");
+//	p.CommandsToDebug.Add("0004149535");
+	//p.StopAt("23:57:00");
 	
 	//////////////////////////////////////////////
 	// Dump Messaggi
@@ -317,7 +316,8 @@ void AddMeasuresFromExternalFile(PlotModel pm, string measureFile)
 		
 	var s_measures = new OxyPlot.Series.StairStepSeries();
 	s_measures.Title = "Measures";
-	s_measures.Color = OxyColors.DarkGoldenrod;
+	s_measures.Color = OxyColor.FromAColor(128, OxyColors.DarkGoldenrod);
+	s_measures.StrokeThickness = 3.0;
 	foreach(var pt in measures)
 	{
 		s_measures.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(pt.Key), pt.Value));

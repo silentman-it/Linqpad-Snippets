@@ -28,32 +28,50 @@
 
 void Main()
 {
-	//string fileName = @"C:\Users\Federico\Desktop\Win2008r2Test1DataCollector01_run20170711.csv";
-	string fileName = @"C:\Users\Federico\Desktop\DataCollector01.csv";
-	var reader = File.OpenText(fileName);
-	CsvReader csv = new CsvReader(reader, new CsvConfiguration() { HasHeaderRecord = true, IgnoreQuotes = false, IgnoreHeaderWhiteSpace = true, TrimFields = true, IgnoreBlankLines = true, IgnoreReadingExceptions = true } );
+	var dic1 = GetDic(@"C:\Users\Federico\Desktop\SRVEGT01_CalculatePlans_DataCollector_20171006.csv");
 	
-	var dic = new Dictionary<DateTime, long>();
+	//var dic2 = GetDic(@"C:\Users\Federico\Desktop\loop_w10.csv", "M/dd/yyyy h:mm:ss tt", 0, 6, ";");
+	
+	var pm = FillPlotModel(dic1);
+	
+	Show(pm);
+}
+
+public Dictionary<DateTime, double> GetDic(string fileName, string keyFormat = "MM/dd/yyyy HH:mm:ss.fff", int valueKeyIndex = 0, int valueColumnIndex = 1, string fieldSep = ",")
+{
+	var reader = File.OpenText(fileName);
+	CsvReader csv = new CsvReader(reader, new CsvConfiguration()
+	{
+		HasHeaderRecord = true,
+		IgnoreQuotes = false,
+		IgnoreHeaderWhiteSpace = true,
+		TrimFields = true,
+		IgnoreBlankLines = true,
+		IgnoreReadingExceptions = true,
+		Delimiter = fieldSep
+	} );
+	
+	var dic = new Dictionary<DateTime, double>();
 	
 	while( csv.Read() )
 	{
 		try
 		{	        
-			var key = DateTime.ParseExact(csv.GetField<string>(0), "MM/dd/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-			var privateBytes = csv.GetField<long>(1);
-			dic[key] = privateBytes;
+			var key = DateTime.ParseExact(csv.GetField<string>(valueKeyIndex), keyFormat, CultureInfo.InvariantCulture);
+			var val = csv.GetField<double>(valueColumnIndex);
+			dic[key] = Convert.ToDouble(val);
 		}
 		catch (CsvTypeConverterException ex)
 		{}
+		catch (Exception ex)
+		{}
 	}
 	
-	var pm = FillPlotModel(dic);
-	
-	Show(pm);
+	return dic;
 }
 
 
-PlotModel FillPlotModel(Dictionary<DateTime, long> dic)
+PlotModel FillPlotModel(params Dictionary<DateTime, double>[] dics)
 {
 	var pm = new PlotModel();
 	
@@ -66,8 +84,9 @@ PlotModel FillPlotModel(Dictionary<DateTime, long> dic)
 		StringFormat = "dd/MM/yy\r\nHH:mm",
 		MajorGridlineStyle = LineStyle.Solid,
 		MinorGridlineStyle = LineStyle.Dot,
-		MajorGridlineColor = OxyColors.LightGray,
+		MajorGridlineColor = OxyColors.DarkGray,
 		MinorGridlineColor = OxyColors.LightGray,
+		MajorStep = 1,
 	});
 	
 	pm.Axes.Add(new OxyPlot.Axes.LinearAxis()
@@ -82,16 +101,38 @@ PlotModel FillPlotModel(Dictionary<DateTime, long> dic)
 		MajorGridlineColor = OxyColors.LightGray,
 		MinorGridlineColor = OxyColors.LightGray,
 	});
+	
+	pm.Axes.Add(new OxyPlot.Axes.LinearAxis()
+	{
+		Position = OxyPlot.Axes.AxisPosition.Right,
+		Key = "Cache Items",
+		Minimum = 0,
+		MaximumPadding = 0.1,
+		MinimumPadding = 0.1,
+	});
 
-	var s_memUsage = new OxyPlot.Series.StairStepSeries();
-	s_memUsage.Title = "MemUsage";
-	s_memUsage.Color = OxyColors.Red;
+	int axisIndex = 0;
+	var YAxes = pm.Axes.Where(x => x.Position != OxyPlot.Axes.AxisPosition.Bottom).ToArray().Dump();
+	int axisCount = YAxes.Count();
+	foreach(var dic in dics)
+	{
+		var axisKey = YAxes[axisIndex].Key;
+		pm.Series.Add(GetSeries(dic, axisKey));
+		axisIndex = (++axisIndex) % axisCount;
+	}
+	return pm;
+}
+
+OxyPlot.Series.StairStepSeries GetSeries(Dictionary<DateTime, double> dic, string axisKey)
+{
+	var s_dic = new OxyPlot.Series.StairStepSeries();
+	s_dic.Title = axisKey;
+	s_dic.YAxisKey = axisKey;
 	foreach(var i in dic)
 	{
-		s_memUsage.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(i.Key), i.Value));
+		s_dic.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(i.Key), i.Value));
 	}
-	pm.Series.Add(s_memUsage);
-	return pm;
+	return s_dic;
 }
 
 void Show(PlotModel model, double width = 1000, double height = 800)
