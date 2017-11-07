@@ -22,14 +22,15 @@
   <Namespace>System.ServiceModel</Namespace>
 </Query>
 
+
 void Main()
 {
 	//string[] unitList = { "UP_BUSSENTO_1" };
-	//string[] unitList = { "UP_VADOTERM_5" };
+	string[] unitList = { "UP_TORINONORD_1" };
 
 	//string[] unitList = { "UP_NAPOLIL_4", "UP_TORREVALD_4", "UP_TRRVLDLIGA_5", "UP_TRRVLDLIGA_6", "UP_VADOTERM_5", "UP_VADO_TERM_3", "UP_VADO_TERM_4" };
 	//string[] unitList = { "UP_CNTRALETEL_11", "UP_BRESSANON_1", "UP_S.PANCRAZ_1", "UP_S.VALBURG_1", "UP_LAPPAGO_1", "UP_M.DI_TURE_1", "UP_PONTE_GAR_1", "UP_SARENTINO_1", "UP_S.FLORI.A_1", "UP_SFLORIANO_2", "UP_CNTRLNTRNO_11", "UP_FONTANA_B_1", "UP_LANA_1", "UP_PRACOMUNE_1", "UP_CARDANO_1" };
-	string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
+	//string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
 	
 	string endpointAddress = "net.tcp://localhost:8734/CalculatePlans/"; // LOCAL
 	//string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; // IREN TEST
@@ -46,12 +47,10 @@ void Main()
 	ICalculatePlansService px = myNetTcpChannelFactory.CreateChannel();
 	
 	px.GetServiceInfo().Dump("Service Version");
-	
-	var buff = px.GetPlanCalculationDump("UP_TURBIGO_4", DateTime.Today, "pvmc");
 
 	var o = 
-		//px.GetCalculatePlansDataExtended(unitList, DateTime.Parse("29/09/2017"), GetCalculatePlansDataOptions.Defaults)
-		px.GetCalculatePlansDataExtended(unitList, DateTime.Today, GetCalculatePlansDataOptions.Defaults)
+		//px.GetCalculatePlansDataExtended(unitList, DateTime.Parse("29/08/2017"), GetCalculatePlansDataOptions.Defaults)
+		px.GetCalculatePlansDataExtended(unitList, DateTime.Today.AddDays(-1), GetCalculatePlansDataOptions.Defaults)
 			.Dump("GetCalculatePlansData() over NetTcp");
 			
 	px.GetCacheStatus()
@@ -72,6 +71,7 @@ void Main()
 // Copied from Service Reference's code
 // ///////////////////////////////////////////////
 
+    
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="CalculatePlansDataItem", Namespace="http://schemas.datacontract.org/2004/07/CalculatePlans")]
@@ -94,7 +94,7 @@ void Main()
         private System.Collections.Generic.Dictionary<string, CalculatePlansFasciaItem[]> FasceField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private System.DateTime LatestMeasureTimeField;
+        private System.DateTimeOffset LatestMeasureTimeField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private int MessageCountField;
@@ -195,7 +195,7 @@ void Main()
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.DateTime LatestMeasureTime {
+        public System.DateTimeOffset LatestMeasureTime {
             get {
                 return this.LatestMeasureTimeField;
             }

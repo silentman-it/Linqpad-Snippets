@@ -18,19 +18,31 @@
   <Namespace>OxyPlot</Namespace>
   <Namespace>OxyPlot.Wpf</Namespace>
   <Namespace>System.Globalization</Namespace>
+  <Namespace>System.ServiceModel</Namespace>
   <Namespace>System.Windows</Namespace>
   <Namespace>System.Windows.Controls</Namespace>
   <Namespace>System.Windows.Input</Namespace>
   <Namespace>TMS.Common.Utils.Serialization</Namespace>
-  <Namespace>System.ServiceModel</Namespace>
 </Query>
 
 void Main()
 {
-	string endpointAddress = "net.tcp://localhost:8734/CalculatePlans/"; // LOCAL
-	byte[] buffer = GetDumpBufferFromService(endpointAddress, "UP_VADOTERM_5", DateTime.Parse("28/08/2017"));
+	
+	//string endpointAddress = "net.tcp://win2008r2test1:8734/CalculatePlans/"; //local
+	//string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; //iren test
+	string endpointAddress = "net.tcp://srvegt02.master.local:8734/CalculatePlans/"; //iren prod
+	
+	string unitName = "UP_TORINONORD_1";
+	DateTime flowDate = DateTime.Parse("03/11/2017");
 
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	Console.Write("Getting dump data from service.... ");
+	byte[] buffer = GetDumpBufferFromService(endpointAddress, unitName, flowDate);
+	Console.WriteLine("OK!");
+
+	Console.Write("Deserializing dump data.... ");
 	PVMC p = BinarySerialization.Deserialize<PVMC>(buffer);
+	Console.WriteLine("OK!");
 	
 	p.Unit.Dump("Unit");
 	p.FlowDate.Dump("FlowDate");
@@ -41,7 +53,7 @@ void Main()
 
 //	p.CommandsToIgnore.Add("0004131740");
 //	
-//	p.CommandsToDebug.Add("0004149535");
+//	p.CommandsToDebug.Add("0004184104");
 	//p.StopAt("23:57:00");
 	
 	//////////////////////////////////////////////
@@ -75,7 +87,13 @@ void Main()
 	p.CommandIgnored += (o,e) => { Console.WriteLine ("Messaggio ignorato. MsgId={0}, Reason={1}", e.Message.ID, e.Reason); };
 	p.GenericLog += (o, e) => { Console.WriteLine("LOG: ts={0}. \"{1}\"", e.TS, e.Message); };
 	//
+	
+	//////////////////////////////////////////////
+	// CALCULATION!!
+	//////////////////////////////////////////////
+	//
 	Console.WriteLine ("Calculation in progress!");
+	p.InitWorkingRUP();
 	p.Calculate();
 	Console.WriteLine ("Calculation finished!");
 	
@@ -123,11 +141,7 @@ byte[] GetDumpBufferFromService(string endpointAddress, string unitName, DateTim
 	ChannelFactory<ICalculatePlansService> myNetTcpChannelFactory = new ChannelFactory<ICalculatePlansService>(myNetTcpBinding, new EndpointAddress(endpointAddress));
 
 	ICalculatePlansService px = myNetTcpChannelFactory.CreateChannel();
-	var buff = px.GetPlanCalculationDump(unitName, flowDate, planType);
-	
-	return buff;
-
-
+	return px.GetPlanCalculationDump(unitName, flowDate, planType);
 }
 
 void ExportImages(PlotModel pm, string fileName)
@@ -310,34 +324,6 @@ void Show(PlotModel model, double width = 1000, double height = 800)
 	w.Show();
 }
 
-void AddMeasuresFromExternalFile(PlotModel pm, string measureFile)
-{
-	if(!File.Exists(measureFile)) return;
-	
-	var lang = CultureInfo.CreateSpecificCulture("en-US");
-	
-	var measures = XElement
-		.Load(measureFile)
-		.Element("Body")
-		.Dump("Check")
-		.Elements()
-		.ToDictionary(
-			k => XmlConvert.ToDateTime(k.Attribute("StartMinute").Value, XmlDateTimeSerializationMode.Unspecified),
-			v => Convert.ToDouble(v.Attribute("Value").Value, lang)
-		).Dump("Measures");
-		
-	var s_measures = new OxyPlot.Series.StairStepSeries();
-	s_measures.Title = "Measures";
-	s_measures.Color = OxyColor.FromAColor(128, OxyColors.DarkGoldenrod);
-	s_measures.StrokeThickness = 3.0;
-	foreach(var pt in measures)
-	{
-		s_measures.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(pt.Key), pt.Value));
-	}
-	pm.Series.Add(s_measures);
-		
-}
-
 public static IEnumerable<DateTime> GetAllDayMinutes(DateTime d)
 {
 	var baseDate = d.Date;
@@ -352,6 +338,7 @@ public static IEnumerable<DateTime> GetAllDayMinutes(DateTime d)
 // Copied from Service Reference's code
 // ///////////////////////////////////////////////
 
+    
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="CalculatePlansDataItem", Namespace="http://schemas.datacontract.org/2004/07/CalculatePlans")]

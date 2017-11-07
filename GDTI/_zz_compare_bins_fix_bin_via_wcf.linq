@@ -24,103 +24,11 @@
 
 void Main()
 {
-	string fileName = @"C:\Users\Federico\Desktop\GDTI\K\DEBUG_PVMC_UP_TORINONORD_1_Calculation_20171106.bin";
-	string measureFile = @"";
+	PVMC p1 = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(@"C:\Temp\dump_service.bin"));
+	PVMC p2 = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(@"C:\Temp\dump_corrotto.bin"));
 	
-	PVMC p = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(fileName));
-//	var p = p2 as PVMC;
-
-	//PVM p = BinarySerialization.Deserialize<PVM>(File.ReadAllBytes(fileName));
-	//PVtc p = BinarySerialization.Deserialize<PVtc>(File.ReadAllBytes(fileName));
-	
-	p.Unit.Dump("Unit");
-	p.FlowDate.Dump("FlowDate");
-	
-	///////////////////////
-	p.Debug = true;
-	///////////////////////
-	
-
-//	p.CommandsToIgnore.Add("0004131740");
-//	
-//	p.CommandsToDebug.Add("0004149535");
-	//p.StopAt("09:56:00");
-	
-	//////////////////////////////////////////////
-	// Dump Messaggi
-	//////////////////////////////////////////////
-	p.Commands
-	.Where(x => x is BalanceOrderMessage)
-	.Cast<BalanceOrderMessage>()
-	.Select(x => new
-	{
-		x.FileName,
-		x.Unit,
-		Start = x.StartDate.Value,
-		End = x.EndDate.Value,
-		x.ContinuationType,
-		x.PVPowerDelta_TINI,
-		x.PVPowerDelta_TFIN,
-		LinkOrder = x.IsLinkOrder
-	})
-	.Dump("Ordini Bilanciamento");
-	
-	//////////////////////////////////////////////
-	// Event handlers
-	//////////////////////////////////////////////
-	//
-	p.BeforeExecutingCommand += (o,e) => { Console.WriteLine ("BDE Start: ID={0} From={1} To={2}", e.Message.ID, e.Message.StartDate, e.Message.EndDate); };
-	p.AfterExecutingCommand += (o,e) => { Console.WriteLine ("BDE End: ID={0} Status={1}", e.Message.ID, e.Message.Status); };
-	p.SetupChanged += (o,e) => { Console.WriteLine ("SetupChanged: TS={0} From={1} To={2}", e.StartTS, e.From, e.To); };
-	p.RampViolation += (o,e) => { Console.WriteLine ("Rampa violata! TS={0}, Requested={1}, Max={2}", e.TS.ToString(), e.RequestedRamp, e.MaxRamp); };
-	p.CompletionTimeViolation += (o,e) => { Console.WriteLine ("Violato tempo di esecuzione! MsgId={0}, Expected={1}, Actual={2}", e.Message.ID, e.ExpectedCompletionTime, e.ActualCompletionTime); };
-	p.CommandIgnored += (o,e) => { Console.WriteLine ("Messaggio ignorato. MsgId={0}, Reason={1}", e.Message.ID, e.Reason); };
-	p.GenericLog += (o, e) => { Console.WriteLine("LOG: ts={0}. \"{1}\"", e.TS, e.Message); };
-	//
-	Console.WriteLine ("Calculation in progress!");
-	p.InitWorkingRUP();
-	p.Calculate();
-	Console.WriteLine ("Calculation finished!");
-	
-	//////////////////////////////////////////////
-	// Esito Messaggi
-	//////////////////////////////////////////////
-	//
-	p.Commands
-	.OrderBy(x => x.ID).Select(x => new { ID = x.ID, Status = x.Status, Type = x.GetType().Name, Detail = x.ToString(), Obj = x }).Dump("Esito BDE");
-	//
-	
-	//////////////////////////////////////////////
-	// Risultato
-	//////////////////////////////////////////////
-	
-	p.Plan
-	.Join(p.OriginalPlan, x => x.TS, x => x.TS, (x,y) => new { TS = x.TS, PV = y.Val, PVMC = x.Val })
-	.Join(p.PVM         , x => x.TS, x => x.TS, (x,y) => new { TS = x.TS, PV = x.PV, PVM = y.Val, PVMC = x.PVMC })
-	.Dump("Risultato");
-	
-	//////////////////////////////////////////////
-	// Dump Risultato su file csv
-	//////////////////////////////////////////////
-	
-	File.WriteAllText(fileName + ".DUMP.csv", p.Dump());
-	
-	p.PreviousWorkingRUP.Dump("Previous Working RUP");
-	p.CurrentWorkingRUP.Dump("Current Working RUP");
-	p.FollowingWorkingRUP.Dump("Following Working RUP");
-	//p.RegulationSignal.Dump("Regulation Signal");
-	p.Unavailabilities.Dump("Unavailabilities");
-	p.CountPlanSetupChanges().Dump("Setup Changes");
-	
-	p.Dump("Raw Object");
-	
-	var pm = FillPlotModel(p);
-	
-	AddMeasuresFromExternalFile(pm, measureFile);
-
-	ExportImages(pm, fileName);
-	
-	Show(pm);
+	p1.Dump("Lato Service");
+	p2.Dump("Lato Client");
 }
 
 void ExportImages(PlotModel pm, string fileName)
@@ -133,12 +41,20 @@ void ExportImages(PlotModel pm, string fileName)
 		png.Export(pm, stream);
 	}
 	
+//	using(var stream = new FileStream(fileName + ".DUMP.svg", FileMode.OpenOrCreate, FileAccess.Write))
+//	{
+//		OxyPlot.SvgExporter svg = new OxyPlot.SvgExporter();
+//		svg.Width = 1600;
+//		svg.Height = 1200;
+//		svg.Export(pm, stream);
+//	}
+
 }
 
-PlotModel FillPlotModel(PVMC pvmc)
+PlotModel FillPlotModel(PVBase pcalc)
 {
 	var pm = new PlotModel();
-	pm.Title = string.Format("{0} {1}", pvmc.Unit.Name, pvmc.FlowDate.ToShortDateString());
+	pm.Title = string.Format("{0} {1} {2}", pcalc.GetType().Name, pcalc.Unit.Name, pcalc.FlowDate.ToShortDateString());
 	
 	// Axes
 	pm.Axes.Clear();
@@ -167,10 +83,10 @@ PlotModel FillPlotModel(PVMC pvmc)
 	});
 	
 	// RUP
-	var lsDynRUP = pvmc.OriginalDynamicRUP.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
-	var lsStaticRUP = GetAllDayMinutes(pvmc.FlowDate).SelectMany(rd => pvmc.OriginalStaticRUP.Assetti.AvailableOnly().Select(a => new { TS = rd.TimeOfDay, a.Id, a.PMin, a.PMax })).GroupBy(x => x.Id);
+	var lsDynRUP = pcalc.OriginalDynamicRUP.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
+	var lsStaticRUP = GetAllDayMinutes(pcalc.FlowDate).SelectMany(rd => pcalc.OriginalStaticRUP.Assetti.AvailableOnly().Select(a => new { TS = rd.TimeOfDay, a.Id, a.PMin, a.PMax })).GroupBy(x => x.Id);
 	var lsOriginalRUP = lsDynRUP.Any() ? lsDynRUP : lsStaticRUP;
-	var lsWorkingRUP = pvmc.CurrentWorkingRUP.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
+	var lsWorkingRUP = pcalc.CurrentWorkingRUP.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
 	var joinedRUP = lsOriginalRUP.Join(lsWorkingRUP, o => o.Key, i => i.Key, (o, i) => new { Original = o, Working = i });
 	
 	foreach(var grp in joinedRUP)
@@ -197,7 +113,7 @@ PlotModel FillPlotModel(PVMC pvmc)
 		// Original RUP
 		foreach (var pt in grp.Original.OrderBy(x => x.TS))
 		{
-			var d = pvmc.FlowDate + pt.TS;
+			var d = pcalc.FlowDate + pt.TS;
 			s_rup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMin)));
 			s_rup.Points2.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMax)));
 			s_rup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d.AddMinutes(1)), Convert.ToDouble(pt.PMin)));
@@ -207,7 +123,7 @@ PlotModel FillPlotModel(PVMC pvmc)
 		// Working RUP
 		foreach (var pt in grp.Working.OrderBy(x => x.TS))
 		{
-			var d = pvmc.FlowDate + pt.TS;
+			var d = pcalc.FlowDate + pt.TS;
 			s_wrup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMin)));
 			s_wrup.Points2.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMax)));
 			s_wrup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d.AddMinutes(1)), Convert.ToDouble(pt.PMin)));
@@ -222,45 +138,34 @@ PlotModel FillPlotModel(PVMC pvmc)
 	var s_pv = new OxyPlot.Series.StairStepSeries();
 	s_pv.Title = "PV";
 	s_pv.Color = OxyColors.Black;
-	foreach(var pt in pvmc.OriginalPlan)
+	foreach(var pt in pcalc.OriginalPlan)
 	{
-		var d = pvmc.FlowDate + pt.TS;
+		var d = pcalc.FlowDate + pt.TS;
 		s_pv.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
 	}
 	pm.Series.Add(s_pv);
-	
-	// PVM
-	var s_pvm = new OxyPlot.Series.StairStepSeries();
-	s_pvm.Title = "PVM";
-	s_pvm.Color = OxyColors.Blue;
-	foreach(var pt in pvmc.PVM)
-	{
-		var d = pvmc.FlowDate + pt.TS;
-		s_pvm.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
-	}
-	pm.Series.Add(s_pvm);
-	
-	// PVMC
+
+	// PVM/PVMC
 	var s_pvmc = new OxyPlot.Series.StairStepSeries();
-	s_pvmc.Title = "PVMC";
+	s_pvmc.Title = pcalc.GetType().Name;
 	s_pvmc.Color = OxyColors.Red;
-	foreach(var pt in pvmc.Plan)
+	foreach(var pt in pcalc.Plan)
 	{
-		var d = pvmc.FlowDate + pt.TS;
+		var d = pcalc.FlowDate + pt.TS;
 		s_pvmc.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
 	}
 	pm.Series.Add(s_pvmc);
 
 
 	// BDE
-	var msgColl = pvmc.Commands
-		.Where(x => (x is BalanceOrderMessage) && !x.HasBeenRevoked(pvmc))
+	var msgColl = pcalc.Commands
+		.Where(x => (x is BalanceOrderMessage) && !x.HasBeenRevoked(pcalc))
 		.Cast<BalanceOrderMessage>();
 	foreach (var cmd in msgColl)
 	{
 		var anno = new OxyPlot.Annotations.LineAnnotation();
 		anno.Type = OxyPlot.Annotations.LineAnnotationType.Vertical;
-		var sd = pvmc.FlowDate + cmd.StartDate.GetTimeSpan(pvmc.FlowDate);
+		var sd = pcalc.FlowDate + cmd.StartDate.GetTimeSpan(pcalc.FlowDate);
 		anno.X = OxyPlot.Axes.DateTimeAxis.ToDouble(sd);
 		anno.Color = OxyColors.Green;
 		anno.Text = string.Format("{3} {0} {1:0.000} {2}", cmd.ID, cmd.PVPowerDelta_TFIN, cmd.ContinuationType == BalanceOrderType.RampAndStay ? "ST" : "MD", cmd.StartDate.Value.ToString("HH:mm"));
