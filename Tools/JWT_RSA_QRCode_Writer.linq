@@ -38,7 +38,7 @@ public static class JWTHelperExtensions
 	{
 		var writer = new BarcodeWriter
 		{
-			Format = BarcodeFormat.AZTEC,
+			Format = BarcodeFormat.QR_CODE,
 			Options = new EncodingOptions
 			{
 				Height = 300,

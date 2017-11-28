@@ -22,18 +22,21 @@
   <Namespace>System.ServiceModel</Namespace>
 </Query>
 
-
 void Main()
 {
 	//string[] unitList = { "UP_BUSSENTO_1" };
-	string[] unitList = { "UP_TORINONORD_1" };
+	//string[] unitList = { "UP_MONCALRPW_2" };
 
 	//string[] unitList = { "UP_NAPOLIL_4", "UP_TORREVALD_4", "UP_TRRVLDLIGA_5", "UP_TRRVLDLIGA_6", "UP_VADOTERM_5", "UP_VADO_TERM_3", "UP_VADO_TERM_4" };
 	//string[] unitList = { "UP_CNTRALETEL_11", "UP_BRESSANON_1", "UP_S.PANCRAZ_1", "UP_S.VALBURG_1", "UP_LAPPAGO_1", "UP_M.DI_TURE_1", "UP_PONTE_GAR_1", "UP_SARENTINO_1", "UP_S.FLORI.A_1", "UP_SFLORIANO_2", "UP_CNTRLNTRNO_11", "UP_FONTANA_B_1", "UP_LANA_1", "UP_PRACOMUNE_1", "UP_CARDANO_1" };
-	//string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
+	string[] unitList = { "UP_BUSSENTO_1", "UP_MONCALIERI_3", "UP_MONCALRPW_2", "UP_PNTVENTOUX_3", "UP_ROSONE_1", "UP_TELESSIO_1", "UP_TORINONORD_1", "UP_TURBIGO_4", "UP_VILLA_1" };
 	
-	string endpointAddress = "net.tcp://localhost:8734/CalculatePlans/"; // LOCAL
+	//DateTime flowDate = DateTime.Parse("29/10/2017");
+	DateTime flowDate = DateTime.Today;
+	
+	//string endpointAddress = "net.tcp://localhost:8734/CalculatePlans/"; // LOCAL
 	//string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; // IREN TEST
+	string endpointAddress = "net.tcp://srvegt02.master.local:8734/CalculatePlans/"; // IREN PROD
 	
 	NetTcpBinding myNetTcpBinding = new NetTcpBinding() {
 		MaxReceivedMessageSize = 1024 * 64 * 100,
@@ -46,11 +49,10 @@ void Main()
 
 	ICalculatePlansService px = myNetTcpChannelFactory.CreateChannel();
 	
-	px.GetServiceInfo().Dump("Service Version");
+	//px.GetServiceInfo().Dump("Service Version");
 
 	var o = 
-		//px.GetCalculatePlansDataExtended(unitList, DateTime.Parse("29/08/2017"), GetCalculatePlansDataOptions.Defaults)
-		px.GetCalculatePlansDataExtended(unitList, DateTime.Today.AddDays(-1), GetCalculatePlansDataOptions.Defaults)
+		px.GetCalculatePlansDataExtended(unitList, flowDate, GetCalculatePlansDataOptions.Defaults)
 			.Dump("GetCalculatePlansData() over NetTcp");
 			
 	px.GetCacheStatus()

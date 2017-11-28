@@ -28,12 +28,12 @@
 void Main()
 {
 	
-	//string endpointAddress = "net.tcp://win2008r2test1:8734/CalculatePlans/"; //local
+	string endpointAddress = "net.tcp://win2008r2test1:8734/CalculatePlans/"; //local
 	//string endpointAddress = "net.tcp://srvegt01.master.local:8734/CalculatePlans/"; //iren test
-	string endpointAddress = "net.tcp://srvegt02.master.local:8734/CalculatePlans/"; //iren prod
+	//string endpointAddress = "net.tcp://srvegt02.master.local:18734/CalculatePlans/"; //iren prod
 	
-	string unitName = "UP_TORINONORD_1";
-	DateTime flowDate = DateTime.Parse("03/11/2017");
+	string unitName = "UP_VADOTERM_5";
+	DateTime flowDate = DateTime.Parse("09/09/2017");
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	Console.Write("Getting dump data from service.... ");

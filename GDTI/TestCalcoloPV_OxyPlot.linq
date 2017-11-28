@@ -24,12 +24,10 @@
 
 void Main()
 {
-	string fileName = @"C:\Users\Federico\Desktop\GDTI\K\DEBUG_PVMC_UP_TORINONORD_1_Calculation_20171106.bin";
+	string fileName = @"C:\Users\Federico\Desktop\GDTI\DEBUG_PVMC_UP_VADOTERM_5_Calculation_20170817.bin";
 	string measureFile = @"";
 	
 	PVMC p = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(fileName));
-//	var p = p2 as PVMC;
-
 	//PVM p = BinarySerialization.Deserialize<PVM>(File.ReadAllBytes(fileName));
 	//PVtc p = BinarySerialization.Deserialize<PVtc>(File.ReadAllBytes(fileName));
 	
@@ -37,15 +35,17 @@ void Main()
 	p.FlowDate.Dump("FlowDate");
 	
 	///////////////////////
-	p.Debug = true;
+	p.Debug = false;
 	///////////////////////
 	
 
 //	p.CommandsToIgnore.Add("0004131740");
 //	
-//	p.CommandsToDebug.Add("0004149535");
-	//p.StopAt("09:56:00");
+	//p.CommandsToDebug.Add("0004168828");
+	//p.StopAt("23:40:00");
 	
+	//p.Commands.Clear();
+
 	//////////////////////////////////////////////
 	// Dump Messaggi
 	//////////////////////////////////////////////
@@ -96,7 +96,7 @@ void Main()
 	
 	p.Plan
 	.Join(p.OriginalPlan, x => x.TS, x => x.TS, (x,y) => new { TS = x.TS, PV = y.Val, PVMC = x.Val })
-	.Join(p.PVM         , x => x.TS, x => x.TS, (x,y) => new { TS = x.TS, PV = x.PV, PVM = y.Val, PVMC = x.PVMC })
+	//.Join(p.PVM         , x => x.TS, x => x.TS, (x,y) => new { TS = x.TS, PV = x.PV, PVM = y.Val, PVMC = x.PVMC })
 	.Dump("Risultato");
 	
 	//////////////////////////////////////////////
@@ -121,6 +121,8 @@ void Main()
 	ExportImages(pm, fileName);
 	
 	Show(pm);
+	
+	pm.Series.Dump();
 }
 
 void ExportImages(PlotModel pm, string fileName)
@@ -135,11 +137,131 @@ void ExportImages(PlotModel pm, string fileName)
 	
 }
 
+PlotModel FillPlotModel(PVtc pvtc)
+{
+	var pm = new PlotModel();
+	pm.Title = string.Format("{0} {1}", pvtc.Unit.Name, pvtc.FlowDate.ToShortDateString());
+	
+	pm = InitPlotModel(pvtc, pm);
+	
+	// PVMC
+	var s_pvtc =
+		pm.Series.Where(x => x is OxyPlot.Series.StairStepSeries).Cast<OxyPlot.Series.StairStepSeries>().SingleOrDefault(x => (string)x.Tag == "Calc")
+		?? new OxyPlot.Series.StairStepSeries();
+
+	s_pvtc.Tag = "PVTC";
+	s_pvtc.Title = "PVTC";
+	s_pvtc.Color = OxyColors.Red;
+	foreach(var pt in pvtc.Plan)
+	{
+		var d = pvtc.FlowDate + pt.TS;
+		s_pvtc.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
+	}
+	pm.Series.Add(s_pvtc);
+
+	// BDE
+	var msgColl = pvtc.Commands
+		.Where(x => (x is BalanceOrderMessage) && !x.HasBeenRevoked(pvtc))
+		.Cast<BalanceOrderMessage>();
+		
+	foreach (var cmd in msgColl)
+	{
+		var anno = new OxyPlot.Annotations.LineAnnotation();
+		anno.Type = OxyPlot.Annotations.LineAnnotationType.Vertical;
+		var sd = pvtc.FlowDate + cmd.StartDate.GetTimeSpan(pvtc.FlowDate);
+		anno.X = OxyPlot.Axes.DateTimeAxis.ToDouble(sd);
+		anno.Color = OxyColors.Green;
+		anno.Text = string.Format("{3} {0} {1:0.000} {2}", cmd.ID, cmd.PVPowerDelta_TFIN, cmd.ContinuationType == BalanceOrderType.RampAndStay ? "ST" : "MD", cmd.StartDate.Value.ToString("HH:mm"));
+		pm.Annotations.Add(anno);		
+	}
+	return pm;
+	
+
+}
+
 PlotModel FillPlotModel(PVMC pvmc)
 {
 	var pm = new PlotModel();
 	pm.Title = string.Format("{0} {1}", pvmc.Unit.Name, pvmc.FlowDate.ToShortDateString());
 	
+	pm = InitPlotModel(pvmc, pm);
+	
+	
+	// PVM
+	var s_pvm = pm.Series.Where(x => x is OxyPlot.Series.StairStepSeries).Cast<OxyPlot.Series.StairStepSeries>().SingleOrDefault(x => (string)x.Tag == "Calc")
+		?? new OxyPlot.Series.StairStepSeries();
+
+
+	s_pvm.Tag = "PVM";
+	s_pvm.Title = "PVM";
+	s_pvm.Color = OxyColors.Blue;
+	foreach(var pt in pvmc.PVM)
+	{
+		var d = pvmc.FlowDate + pt.TS;
+		s_pvm.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
+	}
+	
+	if(s_pvm.PlotModel == null)
+		pm.Series.Add(s_pvm);
+	
+	// PVMC
+	var s_pvmc = new OxyPlot.Series.StairStepSeries();
+
+	s_pvm.Tag = "PVMC";
+	s_pvmc.Title = "PVMC";
+	s_pvmc.Color = OxyColors.Red;
+	foreach(var pt in pvmc.Plan)
+	{
+		var d = pvmc.FlowDate + pt.TS;
+		s_pvmc.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
+	}
+	
+	if(s_pvmc.PlotModel == null)
+		pm.Series.Add(s_pvmc);
+
+
+	// BDE
+	var msgColl = pvmc.Commands
+		.Where(x => (x is BalanceOrderMessage) && !x.HasBeenRevoked(pvmc))
+		.Cast<BalanceOrderMessage>();
+	foreach (var cmd in msgColl)
+	{
+		var anno = new OxyPlot.Annotations.LineAnnotation();
+		anno.Type = OxyPlot.Annotations.LineAnnotationType.Vertical;
+		var sd = pvmc.FlowDate + cmd.StartDate.GetTimeSpan(pvmc.FlowDate);
+		anno.X = OxyPlot.Axes.DateTimeAxis.ToDouble(sd);
+		anno.Color = OxyColors.Green;
+		anno.Text = string.Format("{3} {0} {1:0.000} {2} {4}",
+					cmd.ID,
+					cmd.PVPowerDelta_TFIN,
+					cmd.ContinuationType == BalanceOrderType.RampAndStay ? "ST" : "MD",
+					cmd.StartDate.Value.ToString("HH:mm"),
+					cmd.IsLinkOrder ? "(Racc)" : "").Trim();
+		pm.Annotations.Add(anno);		
+	}
+	return pm;
+}
+
+PlotModel InitPlotModel(PVBase p, PlotModel pm)
+{
+	InitAxes(pm);
+	
+	AddRUP(p, pm, p.FlowDate.AddDays(-1));
+	AddRUP(p, pm);
+	AddRUP(p, pm, p.FlowDate.AddDays(+1));
+	
+	AddPV(p, pm, p.FlowDate.AddDays(-1));
+	AddPV(p, pm);
+	AddPV(p, pm, p.FlowDate.AddDays(+1));
+	
+	AddPVM(p, pm, p.FlowDate.AddDays(-1));
+	
+	return pm;
+
+}
+
+void InitAxes(PlotModel pm)
+{
 	// Axes
 	pm.Axes.Clear();
 	pm.Axes.Add(new OxyPlot.Axes.DateTimeAxis()
@@ -165,39 +287,130 @@ PlotModel FillPlotModel(PVMC pvmc)
 		MajorGridlineColor = OxyColors.LightGray,
 		MinorGridlineColor = OxyColors.LightGray
 	});
+
+}
+
+void AddPV(PVBase p, PlotModel pm, DateTime? fd = null)
+{
+	var flowDate = fd ?? p.FlowDate;
+
+	var plan = 
+		flowDate == p.FlowDate ? p.OriginalPlan :
+		flowDate >  p.FlowDate ? p.OriginalFollowingDayPlan :
+		flowDate <  p.FlowDate ? p.OriginalPreviousDayPlan :
+		null;
+	// PV
+	var s_pv =
+		pm.Series.Where(x => x is OxyPlot.Series.StairStepSeries).Cast<OxyPlot.Series.StairStepSeries>().SingleOrDefault(x => (string)x.Tag == "PV")
+		?? new OxyPlot.Series.StairStepSeries();
+		
+	s_pv.Tag = "PV";
+	s_pv.Title = "PV";
+	s_pv.Color = OxyColors.Black;
+	foreach(var pt in plan)
+	{
+		var d = flowDate + pt.TS;
+		s_pv.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
+	}
 	
+	if(s_pv.PlotModel == null)
+		pm.Series.Add(s_pv);
+
+}
+
+void AddPVM(PVBase p, PlotModel pm, DateTime? fd = null)
+{
+	Type t = p.GetType();
+	var flowDate = fd ?? p.FlowDate;
+
+	var plan = 
+		flowDate == p.FlowDate ? p.Plan :
+		flowDate >  p.FlowDate ? p.FollowingDayPlan :
+		flowDate <  p.FlowDate ? p.PreviousDayPlan :
+		null;
+		
+	string title = string.Format("PVM {0}", 
+		flowDate >  p.FlowDate ? "D+1" :
+		flowDate <  p.FlowDate ? "D-1" :
+		null).Trim();
+
+
+	// PVM/C
+	var s_pv =
+		pm.Series.Where(x => x is OxyPlot.Series.StairStepSeries).Cast<OxyPlot.Series.StairStepSeries>().SingleOrDefault(x => (string)x.Tag == "Calc")
+		?? new OxyPlot.Series.StairStepSeries();
+
+	s_pv.Tag = "Calc";
+	s_pv.Title = title;
+	s_pv.Color = OxyColors.Blue;
+	foreach(var pt in plan)
+	{
+		var d = flowDate + pt.TS;
+		s_pv.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
+	}
+	
+	if(s_pv.PlotModel == null)
+		pm.Series.Add(s_pv);
+
+}
+
+
+void AddRUP(PVBase p, PlotModel pm, DateTime? fd = null)
+{
+	var flowDate = fd ?? p.FlowDate;
+	
+	RUP wrup =
+		flowDate == p.FlowDate ? p.CurrentWorkingRUP :
+		flowDate >  p.FlowDate ? p.FollowingWorkingRUP :
+		flowDate <  p.FlowDate ? p.PreviousWorkingRUP :
+		null;
+		
+	RUP orup =
+		flowDate == p.FlowDate ? p.OriginalDynamicRUP :
+		flowDate >  p.FlowDate ? p.OriginalFollowingDynamicRUP :
+		flowDate <  p.FlowDate ? p.OriginalPreviousDynamicRUP :
+		null;
+		
+
 	// RUP
-	var lsDynRUP = pvmc.OriginalDynamicRUP.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
-	var lsStaticRUP = GetAllDayMinutes(pvmc.FlowDate).SelectMany(rd => pvmc.OriginalStaticRUP.Assetti.AvailableOnly().Select(a => new { TS = rd.TimeOfDay, a.Id, a.PMin, a.PMax })).GroupBy(x => x.Id);
+	var lsDynRUP = orup.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
+	var lsStaticRUP = GetAllDayMinutes(flowDate).SelectMany(rd => p.OriginalStaticRUP.Assetti.AvailableOnly().Select(a => new { TS = rd.TimeOfDay, a.Id, a.PMin, a.PMax })).GroupBy(x => x.Id);
 	var lsOriginalRUP = lsDynRUP.Any() ? lsDynRUP : lsStaticRUP;
-	var lsWorkingRUP = pvmc.CurrentWorkingRUP.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
+	var lsWorkingRUP = wrup.Data.SelectMany(rd => rd.Assetti.AvailableOnly().Select(a => new { rd.TS, a.Id, a.PMin, a.PMax } )).GroupBy(x => x.Id);
 	var joinedRUP = lsOriginalRUP.Join(lsWorkingRUP, o => o.Key, i => i.Key, (o, i) => new { Original = o, Working = i });
 	
+	var maxColors = 12;
+	var palette = OxyPalettes.Hue(maxColors);
+	int n = 0;
+	
+	var dimLevel = flowDate == p.FlowDate ? 0 : 0.4;
 	foreach(var grp in joinedRUP)
 	{
 		var s_rup = new OxyPlot.Series.AreaSeries();
 		s_rup.MarkerFill = OxyColors.Transparent;
+		s_rup.Color = OxyColor.Interpolate(palette.Colors[n], OxyColors.Black, dimLevel);
 		s_rup.StrokeThickness = 1;
 		s_rup.DataFieldY = "PSMAX";
 		s_rup.DataFieldY2 = "PSMIN";
 		s_rup.Title = grp.Original.Key;
 		s_rup.YAxisKey = "Plans";
+		s_rup.RenderInLegend = false;
 		
 		var s_wrup = new OxyPlot.Series.AreaSeries();
 		s_wrup.Color = OxyColors.Transparent;
 		s_wrup.Color2 = OxyColors.Transparent;
-		//s_wrup.Fill = OxyColors.Transparent;
 		s_wrup.LineStyle = LineStyle.Dot;
 		s_wrup.StrokeThickness = 1;
 		s_wrup.DataFieldY = "PSMAX";
 		s_wrup.DataFieldY2 = "PSMIN";
-		s_wrup.Title = grp.Working.Key + " (SB)";
+		s_wrup.Title = grp.Working.Key + " (Working)";
 		s_wrup.YAxisKey = "Plans";
+		s_wrup.RenderInLegend = false;
 		
 		// Original RUP
 		foreach (var pt in grp.Original.OrderBy(x => x.TS))
 		{
-			var d = pvmc.FlowDate + pt.TS;
+			var d = flowDate + pt.TS;
 			s_rup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMin)));
 			s_rup.Points2.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMax)));
 			s_rup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d.AddMinutes(1)), Convert.ToDouble(pt.PMin)));
@@ -207,7 +420,7 @@ PlotModel FillPlotModel(PVMC pvmc)
 		// Working RUP
 		foreach (var pt in grp.Working.OrderBy(x => x.TS))
 		{
-			var d = pvmc.FlowDate + pt.TS;
+			var d = flowDate + pt.TS;
 			s_wrup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMin)));
 			s_wrup.Points2.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.PMax)));
 			s_wrup.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d.AddMinutes(1)), Convert.ToDouble(pt.PMin)));
@@ -216,57 +429,11 @@ PlotModel FillPlotModel(PVMC pvmc)
 		
 		pm.Series.Add(s_rup);
 		pm.Series.Add(s_wrup);
+		
+		n = (++n) % maxColors;
 	}
 
-	// PV
-	var s_pv = new OxyPlot.Series.StairStepSeries();
-	s_pv.Title = "PV";
-	s_pv.Color = OxyColors.Black;
-	foreach(var pt in pvmc.OriginalPlan)
-	{
-		var d = pvmc.FlowDate + pt.TS;
-		s_pv.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
-	}
-	pm.Series.Add(s_pv);
-	
-	// PVM
-	var s_pvm = new OxyPlot.Series.StairStepSeries();
-	s_pvm.Title = "PVM";
-	s_pvm.Color = OxyColors.Blue;
-	foreach(var pt in pvmc.PVM)
-	{
-		var d = pvmc.FlowDate + pt.TS;
-		s_pvm.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
-	}
-	pm.Series.Add(s_pvm);
-	
-	// PVMC
-	var s_pvmc = new OxyPlot.Series.StairStepSeries();
-	s_pvmc.Title = "PVMC";
-	s_pvmc.Color = OxyColors.Red;
-	foreach(var pt in pvmc.Plan)
-	{
-		var d = pvmc.FlowDate + pt.TS;
-		s_pvmc.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
-	}
-	pm.Series.Add(s_pvmc);
 
-
-	// BDE
-	var msgColl = pvmc.Commands
-		.Where(x => (x is BalanceOrderMessage) && !x.HasBeenRevoked(pvmc))
-		.Cast<BalanceOrderMessage>();
-	foreach (var cmd in msgColl)
-	{
-		var anno = new OxyPlot.Annotations.LineAnnotation();
-		anno.Type = OxyPlot.Annotations.LineAnnotationType.Vertical;
-		var sd = pvmc.FlowDate + cmd.StartDate.GetTimeSpan(pvmc.FlowDate);
-		anno.X = OxyPlot.Axes.DateTimeAxis.ToDouble(sd);
-		anno.Color = OxyColors.Green;
-		anno.Text = string.Format("{3} {0} {1:0.000} {2}", cmd.ID, cmd.PVPowerDelta_TFIN, cmd.ContinuationType == BalanceOrderType.RampAndStay ? "ST" : "MD", cmd.StartDate.Value.ToString("HH:mm"));
-		pm.Annotations.Add(anno);		
-	}
-	return pm;
 }
 
 void Show(PlotModel model, double width = 1000, double height = 800)
