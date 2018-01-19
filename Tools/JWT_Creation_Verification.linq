@@ -16,9 +16,21 @@ void Main()
 {
 	JWTHelper.Instance.DefaultIssuer = "http://bidevolution.leonardocompany.com/";
 	JWTHelper.Instance.DefaultAudience = "http://bidevolution.leonardocompany.com/";
-	JWTHelper.Instance.DefaultSecurityKey = "UHxNtYMRYwvfpO1dS5pWLKL7M2DgOj40EbN4SoBWgfc";
+	JWTHelper.Instance.DefaultSecurityKey = "UHxNtYMRYwvfpO1dS5pWLKL0M2DgOj40EbN4SoBWgfc";
 	
-	var enc = JWTHelper.Instance.Generate("admingme", "Admin", TimeSpan.FromMinutes(20)).Dump();
+	Dictionary<string, string> c = new Dictionary<string, string>();
+	
+	c["nameid"] = "5";
+	c["unique_name"] = "federico";
+	c["role"] = "User";
+	c["email"] = "";
+	c["given_name"] = "Federico";
+	c["family_name"] = "Coppola";
+	c["bidevo:culture"] = "it-IT";
+	c["bidevo:timezone"] = "";
+	
+	
+	var enc = JWTHelper.Instance.Generate(TimeSpan.FromDays(1000), null, null, null, c).Dump();
 
 	var v = JWTHelper.Instance.Validate(enc).Dump();
 	
@@ -70,7 +82,7 @@ public sealed class JWTHelper
    public string DefaultAudience { get; set; }
 
 
-   public string Generate(string userName, string roleName, TimeSpan? validity = null, string issuer = null, string audience = null, string securityKey = null, Dictionary<string, string> extraClaims = null)
+   public string Generate(TimeSpan? validity = null, string issuer = null, string audience = null, string securityKey = null, Dictionary<string, string> claims = null)
    {
 		var plainTextSecurityKey = securityKey ?? DefaultSecurityKey;
 		var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(plainTextSecurityKey));
@@ -78,16 +90,11 @@ public sealed class JWTHelper
 		
 		validity = validity ?? TimeSpan.FromHours(1);
 		
-		var claimsIdentity = new ClaimsIdentity(new List<Claim>()
-		{
-			new Claim(ClaimTypes.NameIdentifier, userName),
-			new Claim(ClaimTypes.Name, userName),
-			new Claim(ClaimTypes.Role, roleName),
-		}, "Custom");
+		var claimsIdentity = new ClaimsIdentity();
 		
-		if(extraClaims != null)
+		if(claims != null)
 		{
-			claimsIdentity.AddClaims(extraClaims.Select(x => new Claim(x.Key, x.Value)));
+			claimsIdentity.AddClaims(claims.Select(x => new Claim(x.Key, x.Value)));
 		}
 
 		var securityTokenDescriptor = new SecurityTokenDescriptor()

@@ -4,12 +4,13 @@
 
 void Main()
 {
-	var password = "admin";
+	var password = "ctcardano2";
 	var salt = GenerateRandomData(100);
 	
 	salt.Dump("Salt");
 	
-	var hash = SHA256Encode(salt + password);
+	//var hash = SHA256Encode(salt + password);
+	var hash = MD5Encode(password);
 	
 	hash.Dump("Hash");
 

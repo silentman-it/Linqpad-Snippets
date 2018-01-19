@@ -9,7 +9,7 @@
 void Main()
 {
 	//AppDomain.CurrentDomain.SetupInformation.ConfigurationFile.Dump();
-	SetConnString("win2008r2test1");
+	SetConnString("gdti_iren_test");
 	
 	//
 	// DEBUG ?
@@ -49,10 +49,10 @@ void Main()
 	//
 	// READ
 	//
-	
-	var sd = SerieData.Instance.GetSerieData("Plant", "UP_VILLA_1", "InstantMeasure", null, null, DateTime.Parse("12/10/2017"));
+
+	var sd = SerieData.Instance.GetSerieData("Terna", "UP_BUSSENTO_1", "VDT_RUP", null, null, DateTime.Parse("28/11/2017"));
 	sd
-		.Where(x => x.ExtendedData.Any())
+		//.Where(x => x.ExtendedData.Any())
 		.Dump();
 	
 	//

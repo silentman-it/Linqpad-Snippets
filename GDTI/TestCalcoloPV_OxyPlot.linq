@@ -24,7 +24,7 @@
 
 void Main()
 {
-	string fileName = @"C:\Users\Federico\Desktop\GDTI\DEBUG_PVMC_UP_VADOTERM_5_Calculation_20170817.bin";
+	string fileName = @"C:\Users\Federico\Desktop\DEBUG_PVMC_UP_TURBIGO_4_Calculation_20171222.bin";
 	string measureFile = @"";
 	
 	PVMC p = BinarySerialization.Deserialize<PVMC>(File.ReadAllBytes(fileName));
@@ -39,10 +39,10 @@ void Main()
 	///////////////////////
 	
 
-//	p.CommandsToIgnore.Add("0004131740");
-//	
-	//p.CommandsToDebug.Add("0004168828");
-	//p.StopAt("23:40:00");
+	//p.CommandsToIgnore.Add("0004040484");
+	
+	//p.CommandsToDebug.Add("0004317621");
+	//p.StopAt("17:30:00");
 	
 	//p.Commands.Clear();
 
@@ -96,7 +96,6 @@ void Main()
 	
 	p.Plan
 	.Join(p.OriginalPlan, x => x.TS, x => x.TS, (x,y) => new { TS = x.TS, PV = y.Val, PVMC = x.Val })
-	//.Join(p.PVM         , x => x.TS, x => x.TS, (x,y) => new { TS = x.TS, PV = x.PV, PVM = y.Val, PVMC = x.PVMC })
 	.Dump("Risultato");
 	
 	//////////////////////////////////////////////
@@ -108,7 +107,6 @@ void Main()
 	p.PreviousWorkingRUP.Dump("Previous Working RUP");
 	p.CurrentWorkingRUP.Dump("Current Working RUP");
 	p.FollowingWorkingRUP.Dump("Following Working RUP");
-	//p.RegulationSignal.Dump("Regulation Signal");
 	p.Unavailabilities.Dump("Unavailabilities");
 	p.CountPlanSetupChanges().Dump("Setup Changes");
 	
@@ -122,7 +120,7 @@ void Main()
 	
 	Show(pm);
 	
-	pm.Series.Dump();
+
 }
 
 void ExportImages(PlotModel pm, string fileName)
@@ -157,7 +155,9 @@ PlotModel FillPlotModel(PVtc pvtc)
 		var d = pvtc.FlowDate + pt.TS;
 		s_pvtc.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
 	}
-	pm.Series.Add(s_pvtc);
+	
+	if(s_pvtc.PlotModel == null)
+		pm.Series.Add(s_pvtc);
 
 	// BDE
 	var msgColl = pvtc.Commands
@@ -177,6 +177,52 @@ PlotModel FillPlotModel(PVtc pvtc)
 	return pm;
 	
 
+}
+
+PlotModel FillPlotModel(PVM pvm)
+{
+	var pm = new PlotModel();
+	pm.Title = string.Format("{0} {1}", pvm.Unit.Name, pvm.FlowDate.ToShortDateString());
+	
+	pm = InitPlotModel(pvm, pm);
+	
+	// PVMC
+	var s_pvm = new OxyPlot.Series.StairStepSeries();
+
+	s_pvm.Tag = "PVM";
+	s_pvm.Title = "PVM";
+	s_pvm.Color = OxyColors.Blue;
+	foreach(var pt in pvm.Plan)
+	{
+		var d = pvm.FlowDate + pt.TS;
+		s_pvm.Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(d), Convert.ToDouble(pt.Val)));
+	}
+	
+	if(s_pvm.PlotModel == null)
+		pm.Series.Add(s_pvm);
+
+	// BDE
+	var msgColl = pvm.Commands
+		.Where(x => (x is BalanceOrderMessage) && !x.HasBeenRevoked(pvm))
+		.Cast<BalanceOrderMessage>();
+	foreach (var cmd in msgColl)
+	{
+		var anno = new OxyPlot.Annotations.LineAnnotation();
+		anno.Type = OxyPlot.Annotations.LineAnnotationType.Vertical;
+		var sd = pvm.FlowDate + cmd.StartDate.GetTimeSpan(pvm.FlowDate);
+		anno.X = OxyPlot.Axes.DateTimeAxis.ToDouble(sd);
+		anno.Color = OxyColors.Green;
+		anno.Text = string.Format("{3} {0} {1:0.000} {2} {4} {5}",
+					cmd.ID,
+					cmd.PVPowerDelta_TFIN,
+					cmd.ContinuationType == BalanceOrderType.RampAndStay ? "ST" : "MD",
+					cmd.StartDate.Value.ToString("HH:mm"),
+					cmd.IsLinkOrder ? "(Racc)" : "",
+					cmd.Status != MessageStatus.Success ?  string.Format("[{0}]", cmd.Status.ToString().ToUpper()) : ""
+					).Trim();
+		pm.Annotations.Add(anno);		
+	}
+	return pm;
 }
 
 PlotModel FillPlotModel(PVMC pvmc)
@@ -231,12 +277,14 @@ PlotModel FillPlotModel(PVMC pvmc)
 		var sd = pvmc.FlowDate + cmd.StartDate.GetTimeSpan(pvmc.FlowDate);
 		anno.X = OxyPlot.Axes.DateTimeAxis.ToDouble(sd);
 		anno.Color = OxyColors.Green;
-		anno.Text = string.Format("{3} {0} {1:0.000} {2} {4}",
+		anno.Text = string.Format("{3} {0} {1:0.000} {2} {4} {5}",
 					cmd.ID,
 					cmd.PVPowerDelta_TFIN,
 					cmd.ContinuationType == BalanceOrderType.RampAndStay ? "ST" : "MD",
 					cmd.StartDate.Value.ToString("HH:mm"),
-					cmd.IsLinkOrder ? "(Racc)" : "").Trim();
+					cmd.IsLinkOrder ? "(Racc)" : "",
+					cmd.Status != MessageStatus.Success ?  string.Format("[{0}]", cmd.Status.ToString().ToUpper()) : ""
+					).Trim();
 		pm.Annotations.Add(anno);		
 	}
 	return pm;
@@ -244,7 +292,7 @@ PlotModel FillPlotModel(PVMC pvmc)
 
 PlotModel InitPlotModel(PVBase p, PlotModel pm)
 {
-	InitAxes(pm);
+	InitAxes(p, pm);
 	
 	AddRUP(p, pm, p.FlowDate.AddDays(-1));
 	AddRUP(p, pm);
@@ -260,7 +308,7 @@ PlotModel InitPlotModel(PVBase p, PlotModel pm)
 
 }
 
-void InitAxes(PlotModel pm)
+void InitAxes(PVBase p, PlotModel pm)
 {
 	// Axes
 	pm.Axes.Clear();
@@ -273,6 +321,8 @@ void InitAxes(PlotModel pm)
 		MinorGridlineStyle = LineStyle.Dot,
 		MajorGridlineColor = OxyColors.LightGray,
 		MinorGridlineColor = OxyColors.LightGray,
+		Minimum = OxyPlot.Axes.DateTimeAxis.ToDouble(p.FlowDate.AddHours(-2)),
+		Maximum = OxyPlot.Axes.DateTimeAxis.ToDouble(p.FlowDate.AddDays(1).AddHours(2))
 	});
 	
 	pm.Axes.Add(new OxyPlot.Axes.LinearAxis()

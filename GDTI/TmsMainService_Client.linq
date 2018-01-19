@@ -24,9 +24,9 @@
 
 void Main()
 {
-	//string endpointAddress = @"http://localhost:11229/TmsMainService.svc"; //LOCAL
-	string endpointAddress = @"http://srvegt01.master.local/TmsMainService.svc"; //IREN_TEST
-	string dnsIdentity = "srvegt01";
+	string endpointAddress = @"http://localhost:11229/TmsMainService.svc"; //LOCAL
+	//string endpointAddress = @"http://srvegt01.master.local/TmsMainService.svc"; //IREN_TEST
+	string dnsIdentity = "localhost";
 
 	WSHttpBinding myBinding = new WSHttpBinding() {
 		MaxReceivedMessageSize = 1024 * 1024 * 5,
@@ -41,15 +41,18 @@ void Main()
 	channelFactory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode = System.ServiceModel.Security.X509CertificateValidationMode.None;
 	channelFactory.Credentials.ServiceCertificate.Authentication.RevocationMode = System.Security.Cryptography.X509Certificates.X509RevocationMode.NoCheck;
 	
-	
 	ITmsMainService px = channelFactory.CreateChannel();
+	
+	// INVOKE METHODS HERE
 
 	//px.GetDBServerDate().Dump("GetDBServerDate()");
 	
 	//string[] unitList = { "UP_NAPOLIL_4", "UP_TORREVALD_4", "UP_TRRVLDLIGA_5", "UP_TRRVLDLIGA_6", "UP_VADOTERM_5", "UP_VADO_TERM_3", "UP_VADO_TERM_4" };
-	string[] unitList = { "UP_VADOTERM_5" };
-	
-	px.GetCalculatePlansDataExtended(unitList, DateTime.Parse("08/06/2017"), GetCalculatePlansDataOptions.Defaults).Dump("GetCalculatePlansData()");
+//	string[] unitList = { "UP_VADOTERM_5" };
+//	
+//	px.GetCalculatePlansDataExtended(unitList, DateTime.Parse("08/06/2017"), GetCalculatePlansDataOptions.Defaults).Dump("GetCalculatePlansData()");
+
+	px.GetUnits(null).Dump("GetUnits(null)");
 		
 	((IClientChannel)px).Close();
 	

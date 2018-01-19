@@ -24,7 +24,8 @@ void Main()
 {
 	List<Tuple<string, string, string>> lsCombinations = new List<Tuple<string, string, string>>()
 	{
-		new Tuple<string, string, string>( "UP_VADOTERM_5",    "29/09/2017", null ),
+		new Tuple<string, string, string>( "UP_TORINONORD_1",    "29/11/2017", null ),
+		new Tuple<string, string, string>( "UP_TURBIGO_4",    "29/11/2017", null ),
 		//new Tuple<string, string, string>( "UP_TURBIGO_4",    "20/07/2017", null ),
 		
 //		new Tuple<string, string, string>( "UP_TORINONORD_1", "09/10/2015", null         ),

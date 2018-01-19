@@ -1,4 +1,4 @@
-<Query Kind="Expression">
+<Query Kind="Statements">
   <Connection>
     <ID>a4da0b26-e220-492d-a3ae-4b29358701ef</ID>
     <Persist>true</Persist>
@@ -9,10 +9,12 @@
     <Database>BIDEVO_DEV</Database>
     <ShowServer>true</ShowServer>
   </Connection>
-  <Output>DataGrids</Output>
 </Query>
 
-Activities
-	.Where(x => x.Direction == 'I')
-	.OrderByDescending(x => x.ActivityId)
-	.Take(20)
+DateTime today = DateTime.Today;
+
+Logs.Where(x =>
+	x.CreationDate >= today &&
+	x.Severity > 1)
+
+.Dump();

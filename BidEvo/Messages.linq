@@ -12,7 +12,6 @@
   <Output>DataGrids</Output>
 </Query>
 
-Activities
-	.Where(x => x.Direction == 'I')
-	.OrderByDescending(x => x.ActivityId)
-	.Take(20)
+Messages
+	.OrderByDescending(x => x.CreationDate)
+	.Take(10)
